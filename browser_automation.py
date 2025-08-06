@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from playwright.sync_api import ElementHandle, Page, sync_playwright
 
@@ -11,7 +11,7 @@ class BrowserAutomation:
         self.headless = headless
         self.logger = logger
 
-    def run_script(self, url: str, actions: Optional[List[dict]] = None,
+    def run_script(self, url: str, actions: Optional[List[Dict[str, Any]]] = None,
                    script: Optional[Callable[[Page, "BrowserAutomation"], Any]] = None) -> Any:
         """Navigate to ``url`` and execute a scripted interaction.
 
@@ -37,30 +37,35 @@ class BrowserAutomation:
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=self.headless)
-            context_args = {}
+            context_args: Dict[str, Any] = {}
             if self.user_agent:
                 context_args["user_agent"] = self.user_agent
             if self.proxy:
                 context_args["proxy"] = {"server": self.proxy}
             context = browser.new_context(**context_args)
             page = context.new_page()
-            page.goto(url)
 
-            result: Any = None
+            try:
+                page.goto(url)
 
-            if script is not None:
-                result = script(page, self)
-            elif actions is not None:
-                for action in actions:
-                    if action["type"] == "click":
-                        page.click(action["selector"])
-                    elif action["type"] == "type":
-                        page.fill(action["selector"], action["value"])
-                    elif action["type"] == "wait":
-                        page.wait_for_timeout(action.get("timeout", 1000))
-                result = page.content()
+                if script is not None:
+                    result = script(page, self)
+                elif actions is not None:
+                    for action in actions:
+                        if action["type"] == "click":
+                            page.click(action["selector"])
+                        elif action["type"] == "type":
+                            page.fill(action["selector"], action["value"])
+                        elif action["type"] == "wait":
+                            page.wait_for_timeout(action.get("timeout", 1000))
+                    result = page.content()
+                else:
+                    result = page.content()
+            finally:
+                page.close()
+                context.close()
+                browser.close()
 
-            browser.close()
         return result
 
     # Convenience DOM helpers -------------------------------------------------
