@@ -46,15 +46,23 @@ def test_plugin_restriction(tmp_path):
     cfg = base_config(tmp_path)
     plugin_dir = tmp_path / 'plugins'
     plugin_dir.mkdir()
+    sentinel = plugin_dir / 'imported'
     plugin_file = plugin_dir / 'sample.py'
-    plugin_file.write_text('def run(**kwargs):\n    return "ok"\n')
+    plugin_file.write_text(
+        'from pathlib import Path\n'
+        '(Path(__file__).parent / "imported").write_text("imported")\n'
+        'def run(**kwargs):\n    return "ok"\n'
+    )
 
     cfg['plugin_dir'] = str(plugin_dir)
 
     agent_no = RAEIOAgent(cfg, logger=None)
     assert agent_no.plugin_registry.execute_plugin('sample') == 'ok'
+    assert sentinel.exists()
 
+    sentinel.unlink()
     cfg['fuckery_mode'] = True
     agent_yes = RAEIOAgent(cfg, logger=None)
     with pytest.raises(PermissionError):
         agent_yes.plugin_registry.execute_plugin('sample')
+    assert not sentinel.exists()

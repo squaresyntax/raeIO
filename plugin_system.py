@@ -1,5 +1,6 @@
 import os
 import importlib.util
+import ast
 
 class PluginRegistry:
     def __init__(self, plugin_dir="plugins", logger=None, fuckery_mode=False):
@@ -27,13 +28,23 @@ class PluginRegistry:
         return module
 
     def get_metadata(self, plugin_name):
+        """Return plugin metadata without importing the plugin code."""
+        path = self.plugins.get(plugin_name)
+        if not path:
+            raise ImportError(f"Plugin {plugin_name} not found.")
         try:
-            mod = self.load_plugin(plugin_name)
-            return getattr(mod, "PLUGIN_META", {})
+            with open(path, "r") as f:
+                src = f.read()
+            tree = ast.parse(src, filename=path)
+            for node in tree.body:
+                if isinstance(node, ast.Assign):
+                    for target in node.targets:
+                        if isinstance(target, ast.Name) and target.id == "PLUGIN_META":
+                            return ast.literal_eval(node.value)
         except Exception as e:
             if self.logger:
-                self.logger.warning(f"Failed to load plugin {plugin_name}: {e}")
-            return {}
+                self.logger.warning(f"Failed to parse metadata for {plugin_name}: {e}")
+        return {}
 
     def list_plugins(self):
         self.scan_plugins()
@@ -44,10 +55,10 @@ class PluginRegistry:
         return result
 
     def execute_plugin(self, plugin_name, **kwargs):
-        plugin = self.load_plugin(plugin_name)
-        meta = getattr(plugin, "PLUGIN_META", {})
+        meta = self.get_metadata(plugin_name)
         if self.fuckery_mode and not meta.get("allow_fuckery"):
             raise PermissionError(f"Plugin {plugin_name} is not allowed in fuckery mode")
+        plugin = self.load_plugin(plugin_name)
         if hasattr(plugin, "run"):
             return plugin.run(**kwargs)
         else:
