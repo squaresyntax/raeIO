@@ -1,10 +1,12 @@
 import os
 import importlib.util
 
+
 class PluginRegistry:
-    def __init__(self, plugin_dir="plugins", logger=None):
+    def __init__(self, plugin_dir="plugins", logger=None, fuckery_mode=False):
         self.plugin_dir = plugin_dir
         self.logger = logger
+        self.fuckery_mode = fuckery_mode
         self.plugins = {}
         os.makedirs(plugin_dir, exist_ok=True)
         self.scan_plugins()
@@ -35,6 +37,8 @@ class PluginRegistry:
             return {}
 
     def list_plugins(self):
+        if self.fuckery_mode:
+            return []
         self.scan_plugins()
         result = []
         for pname in self.plugins:
@@ -43,6 +47,8 @@ class PluginRegistry:
         return result
 
     def execute_plugin(self, plugin_name, **kwargs):
+        if self.fuckery_mode:
+            raise RuntimeError("Plugins disabled in fuckery mode")
         plugin = self.load_plugin(plugin_name)
         if hasattr(plugin, "run"):
             return plugin.run(**kwargs)
