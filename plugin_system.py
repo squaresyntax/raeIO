@@ -1,11 +1,13 @@
 import os
 import importlib.util
+import inspect
 
 class PluginRegistry:
-    def __init__(self, plugin_dir="plugins", logger=None):
+    def __init__(self, plugin_dir="plugins", logger=None, fuckery_mode=False):
         self.plugin_dir = plugin_dir
         self.logger = logger
         self.plugins = {}
+        self.fuckery_mode = fuckery_mode
         os.makedirs(plugin_dir, exist_ok=True)
         self.scan_plugins()
 
@@ -45,6 +47,9 @@ class PluginRegistry:
     def execute_plugin(self, plugin_name, **kwargs):
         plugin = self.load_plugin(plugin_name)
         if hasattr(plugin, "run"):
+            sig = inspect.signature(plugin.run)
+            if "fuckery_mode" in sig.parameters and "fuckery_mode" not in kwargs:
+                kwargs["fuckery_mode"] = self.fuckery_mode
             return plugin.run(**kwargs)
         else:
             raise AttributeError(f"Plugin {plugin_name} has no run()")

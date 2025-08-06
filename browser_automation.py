@@ -1,16 +1,28 @@
-from playwright.sync_api import sync_playwright
+"""Simple browser automation utilities."""
+
+# Playwright is optional; import lazily so tests can run without it
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:  # pragma: no cover - exercised in environments without Playwright
+    sync_playwright = None
 
 class BrowserAutomation:
-    def __init__(self, user_agent=None, proxy=None, headless=True, logger=None):
+    def __init__(self, user_agent=None, proxy=None, headless=True, logger=None, fuckery_mode=False):
         self.user_agent = user_agent
         self.proxy = proxy
         self.headless = headless
+        self.default_headless = headless
         self.logger = logger
+        self.fuckery_mode = fuckery_mode
+        if self.fuckery_mode:
+            self.stealth_mode()
 
     def run_script(self, url, actions):
         """
         actions = list of dicts: {type: "click"/"type"/"wait", selector, value}
         """
+        if not sync_playwright:
+            raise RuntimeError("playwright is not installed")
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=self.headless)
             context_args = {}
@@ -34,7 +46,20 @@ class BrowserAutomation:
         return content
 
     def stealth_mode(self):
-        # Set headless, random user agent, and proxy for stealth
+        """Enable stealth browsing configuration."""
         self.headless = True
-        self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-        # Add further stealth tweaks as needed
+        self.user_agent = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "Chrome/114.0.0.0 Safari/537.36"
+        )
+        # Additional tweaks for stealth could be added here
+
+    def set_fuckery_mode(self, enabled: bool):
+        """Toggle fuckery/stealth mode."""
+        self.fuckery_mode = enabled
+        if enabled:
+            self.stealth_mode()
+        else:
+            self.headless = self.default_headless
+            self.user_agent = None
