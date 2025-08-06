@@ -4,6 +4,8 @@ cache_dir: "cache"
 max_temp_mb: 500
 max_cache_mb: 500
 cache_check_interval: 300
+max_file_age: 86400
+auto_cache_clean: true
 plugin_dir: "plugins"
 tts_voice: "tts_models/en/vctk/vits"
 tts_cache_dir: "tts_cache"

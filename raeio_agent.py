@@ -17,9 +17,11 @@ class RAEIOAgent:
             max_temp_mb=config.get("max_temp_mb", 500),
             max_cache_mb=config.get("max_cache_mb", 500),
             check_interval=config.get("cache_check_interval", 300),
-            logger=logger
+            max_file_age=config.get("max_file_age", 24 * 60 * 60),
+            logger=logger,
         )
-        self.cache_manager.start_auto_clean()
+        if config.get("auto_cache_clean", True):
+            self.cache_manager.start_auto_clean()
         self.plugin_registry = PluginRegistry(plugin_dir=config.get("plugin_dir", "plugins"), logger=logger)
         self.tts_manager = TTSManager(
             voice=config.get("tts_voice", "tts_models/en/vctk/vits"),

@@ -2,13 +2,24 @@ import os
 import shutil
 import time
 
+
 class CacheManager:
-    def __init__(self, temp_dir="temp", cache_dir="cache", max_temp_mb=500, max_cache_mb=500, check_interval=300, logger=None):
+    def __init__(
+        self,
+        temp_dir="temp",
+        cache_dir="cache",
+        max_temp_mb=500,
+        max_cache_mb=500,
+        check_interval=300,
+        max_file_age=24 * 60 * 60,
+        logger=None,
+    ):
         self.temp_dir = temp_dir
         self.cache_dir = cache_dir
         self.max_temp_mb = max_temp_mb
         self.max_cache_mb = max_cache_mb
         self.check_interval = check_interval
+        self.max_file_age = max_file_age
         self.logger = logger
         os.makedirs(self.temp_dir, exist_ok=True)
         os.makedirs(self.cache_dir, exist_ok=True)
@@ -34,6 +45,27 @@ class CacheManager:
                 if self.logger:
                     self.logger.warning(f"Failed to remove {fpath}: {e}")
 
+    def delete_old_files(self, path):
+        now = time.time()
+        for root, dirs, files in os.walk(path):
+            for name in files:
+                fpath = os.path.join(root, name)
+                try:
+                    if now - os.path.getmtime(fpath) > self.max_file_age:
+                        if os.path.isfile(fpath) or os.path.islink(fpath):
+                            os.unlink(fpath)
+                except Exception as e:
+                    if self.logger:
+                        self.logger.warning(f"Failed to remove old file {fpath}: {e}")
+            for name in dirs:
+                dpath = os.path.join(root, name)
+                try:
+                    if now - os.path.getmtime(dpath) > self.max_file_age:
+                        shutil.rmtree(dpath)
+                except Exception as e:
+                    if self.logger:
+                        self.logger.warning(f"Failed to remove old directory {dpath}: {e}")
+
     def enforce_thresholds(self):
         temp_size = self.get_dir_size_mb(self.temp_dir)
         cache_size = self.get_dir_size_mb(self.cache_dir)
@@ -51,6 +83,8 @@ class CacheManager:
         def loop():
             while True:
                 self.enforce_thresholds()
+                self.delete_old_files(self.temp_dir)
+                self.delete_old_files(self.cache_dir)
                 time.sleep(self.check_interval)
         t = threading.Thread(target=loop, daemon=True)
         t.start()
