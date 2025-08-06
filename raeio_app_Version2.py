@@ -6,6 +6,7 @@ import traceback
 
 # Import your agent and modules
 from raeio_agent import RAEIOAgent
+from model_registry import all_features
 
 try:
     import tkinter as tk
@@ -25,14 +26,15 @@ def load_config():
 def cli_main(agent):
     import argparse
     parser = argparse.ArgumentParser(description="RAE.IO CLI")
-    parser.add_argument('--mode', choices=['Art', 'Sound', 'Video', 'Text', 'TCG', 'Fuckery', 'Training', 'Browser'], required=True)
+    features = all_features()
+    parser.add_argument('--feature', choices=features, required=True)
     parser.add_argument('--prompt', type=str, help='Prompt for generation/analysis')
     parser.add_argument('--url', type=str, help='URL for browser automation')
     parser.add_argument('--actions', type=str, help='Browser actions as JSON list')
     parser.add_argument('--plugin', type=str, help='Plugin name (optional)')
     args = parser.parse_args()
 
-    if args.mode == "Browser":
+    if args.feature == "browser":
         import json
         if not args.url or not args.actions:
             print("For browser mode, provide --url and --actions (as JSON list)")
@@ -42,7 +44,7 @@ def cli_main(agent):
         output = agent.run_task("browser", args.prompt or "", context)
     else:
         context = {}
-        output = agent.run_task(args.mode.lower(), args.prompt or "", context, plugin=args.plugin)
+        output = agent.run_task(args.feature, args.prompt or "", context, plugin=args.plugin)
     print(f"\nOutput:\n{output}\n")
 
 def desktop_main(agent):
@@ -50,12 +52,11 @@ def desktop_main(agent):
     root = tk.Tk()
     root.title("RAE.IO Desktop")
 
-    # Mode selection
-    mode_var = tk.StringVar(value="Art")
-    mode_box = ttk.Combobox(root, textvariable=mode_var, values=[
-        "Art", "Sound", "Video", "Text", "TCG", "Fuckery", "Training", "Browser"
-    ], state="readonly")
-    mode_box.pack(pady=5)
+    # Feature selection
+    features = all_features()
+    feature_var = tk.StringVar(value=features[0])
+    feature_box = ttk.Combobox(root, textvariable=feature_var, values=features, state="readonly")
+    feature_box.pack(pady=5)
 
     # Prompt input
     prompt_label = tk.Label(root, text="Prompt / Query:")
@@ -84,7 +85,7 @@ def desktop_main(agent):
     output_text.pack(pady=10)
 
     def run_task():
-        mode = mode_var.get()
+        feature = feature_var.get()
         prompt = prompt_entry.get().strip()
         url = url_entry.get().strip()
         actions = actions_entry.get().strip()
@@ -92,7 +93,7 @@ def desktop_main(agent):
         context = {}
 
         try:
-            if mode == "Browser":
+            if feature == "browser":
                 import json
                 if not url or not actions:
                     output_text.insert(tk.END, "Error: For browser mode, provide URL and actions (JSON list)\n")
@@ -100,7 +101,7 @@ def desktop_main(agent):
                 context = {"url": url, "actions": json.loads(actions)}
                 result = agent.run_task("browser", prompt, context)
             else:
-                result = agent.run_task(mode.lower(), prompt, context, plugin=plugin)
+                result = agent.run_task(feature, prompt, context, plugin=plugin)
             output_text.insert(tk.END, f"Output:\n{result}\n\n")
         except Exception as e:
             output_text.insert(tk.END, f"Error: {e}\n{traceback.format_exc()}\n\n")

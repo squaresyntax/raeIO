@@ -5,6 +5,7 @@ from cache_manager import CacheManager
 from plugin_system import PluginRegistry
 from tts_manager import TTSManager
 from browser_automation import BrowserAutomation
+from model_registry import MODEL_REGISTRY, model_for_feature
 
 class RAEIOAgent:
     def __init__(self, config, logger):
@@ -32,22 +33,26 @@ class RAEIOAgent:
             headless=config.get("browser_headless", True),
             logger=logger
         )
+        self.model_registry = MODEL_REGISTRY
 
-    def run_task(self, task_type, prompt, context, plugin=None):
+    def run_task(self, feature, prompt, context, plugin=None):
         t0 = time.time()
         try:
             if plugin:
                 output = self.plugin_registry.execute_plugin(plugin, prompt=prompt, context=context)
-            elif task_type == "browser":
+            elif feature == "browser":
                 output = self.browser_automation.run_script(context["url"], context["actions"])
             else:
-                output = f"Stub output for {task_type}: {prompt}"
+                model = model_for_feature(feature)
+                if not model:
+                    raise ValueError(f"No model available for feature '{feature}'")
+                output = f"[{model}] {feature}: {prompt}"
             duration = time.time() - t0
-            self.memory.log_task(task_type, prompt, context, output, True, duration)
+            self.memory.log_task(feature, prompt, context, output, True, duration)
             return output
         except Exception as e:
             duration = time.time() - t0
-            self.memory.log_task(task_type, prompt, context, None, False, duration, extra_metrics={"error": str(e)})
+            self.memory.log_task(feature, prompt, context, None, False, duration, extra_metrics={"error": str(e)})
             raise
 
     def analyze_self(self):
