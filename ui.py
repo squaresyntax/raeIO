@@ -1,8 +1,14 @@
 import streamlit as st
-from raeio_core import RAEIOAgent
+import yaml
+import logging
+from raeio_agent import RAEIOAgent
+with open("config.yaml", "r") as f:
+    config = yaml.safe_load(f)
+
+logger = logging.getLogger("RAEIO_UI")
 
 if "agent" not in st.session_state:
-    st.session_state["agent"] = RAEIOAgent()
+    st.session_state["agent"] = RAEIOAgent(config, logger)
 agent = st.session_state["agent"]
 
 # Custom CSS for Bank Gothic, white text, black background, deep purple buttons
@@ -64,5 +70,11 @@ st.sidebar.info(descriptions[cat])
 st.markdown(fuckery_key_message)
 
 st.header("RAE.IO Agent")
-st.write("Select a mode from the sidebar to get started.")
-# Extend here with specific UI for each mode, file upload, query, etc.
+prompt = st.text_area("Enter your prompt:")
+
+if st.button("Run Task") and prompt.strip():
+    try:
+        output = agent.run_task(cat.lower(), prompt, context={}, plugin=None)
+        st.success(f"Task output: {output}")
+    except Exception as e:
+        st.error(f"Error: {e}")

@@ -1,11 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import collect_data_files
+
+
+streamlit_datas = collect_data_files("streamlit")
 
 a = Analysis(
     ['launch_raeio.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=streamlit_datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

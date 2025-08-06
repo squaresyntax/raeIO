@@ -1,13 +1,12 @@
 try:  # pragma: no cover
     from playwright.sync_api import sync_playwright
-except ImportError:  # pragma: no cover
+except ImportError:  # pragma: no cover - fallback when playwright isn't installed
     sync_playwright = None
 
 STEALTH_UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
 )
-
 
 class BrowserAutomation:
     def __init__(self, user_agent=None, proxy=None, headless=True, logger=None):
@@ -20,8 +19,8 @@ class BrowserAutomation:
         """
         actions = list of dicts: {type: "click"/"type"/"wait", selector, value}
         """
-        if sync_playwright is None:
-            raise RuntimeError("Playwright not installed")
+        if not sync_playwright:
+            raise RuntimeError("playwright is not installed. Run: pip install playwright")
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=self.headless)
             context_args = {}

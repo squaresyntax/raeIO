@@ -1,9 +1,18 @@
 import time
+from cryptography.fernet import Fernet
 from task_memory import TaskMemory
 from cache_manager import CacheManager
-from plugin_system import PluginRegistry
+from plugin_registry import PluginRegistry
 from tts_manager import TTSManager
-from browser_automation import BrowserAutomation
+
+try:
+    from browser_automation import BrowserAutomation
+except ImportError:  # pragma: no cover
+    BrowserAutomation = None
+
+from generative_media_manager import generate_art, generate_sound, generate_video
+from energy_transformer_agent import transform_energy
+
 
 class RAEIOAgent:
     def __init__(self, config, logger):
@@ -20,7 +29,7 @@ class RAEIOAgent:
             max_temp_mb=config.get("max_temp_mb", 500),
             max_cache_mb=config.get("max_cache_mb", 500),
             check_interval=config.get("cache_check_interval", 300),
-            logger=logger
+            logger=logger,
         )
         self.cache_manager.start_auto_clean()
         self.plugin_registry = PluginRegistry(
@@ -31,16 +40,88 @@ class RAEIOAgent:
         self.tts_manager = TTSManager(
             voice=config.get("tts_voice", "tts_models/en/vctk/vits"),
             cache_dir=config.get("tts_cache_dir", "tts_cache"),
-            logger=logger
+            logger=logger,
         )
-        self.browser_automation = BrowserAutomation(
-            user_agent=config.get("browser_user_agent"),
-            proxy=config.get("browser_proxy"),
-            headless=config.get("browser_headless", True),
-            logger=logger
-        )
-        if self.fuckery_mode:
-            self.browser_automation.stealth_mode()
+        self.browser_automation = None
+        if BrowserAutomation:
+            self.browser_automation = BrowserAutomation(
+                user_agent=config.get("browser_user_agent"),
+                proxy=config.get("browser_proxy"),
+                headless=config.get("browser_headless", True),
+                logger=logger,
+            )
+            if self.fuckery_mode:
+                self.browser_automation.stealth_mode()
+
+        # Mode and encryption state
+        self.current_mode = None
+        self.current_focus = None
+        self.stealth_mode = False
+        self.fuckery_key = None
+        self.fuckery_encrypted_blobs = []
+        self.prioritized_store = "general"
+        self.active_plugins = []
+        self.training_mode = False
+
+    def set_mode(self, mode, feature_focus=None):
+        self.current_mode = mode
+        self.current_focus = feature_focus
+        if mode == "Fuckery":
+            if not self.fuckery_mode:
+                self.fuckery_mode = True
+                self.stealth_mode = True
+                self.fuckery_key = Fernet.generate_key()
+            self.prioritized_store = self._focus_to_store(feature_focus)
+            # self.active_plugins = self.plugin_registry.get_plugins_for(self.prioritized_store)
+        elif mode == "Training":
+            self.training_mode = True
+            self.fuckery_mode = False
+            self.stealth_mode = False
+            self.prioritized_store = "general"
+            self.active_plugins = []
+        else:
+            self.fuckery_mode = False
+            self.stealth_mode = False
+            self.training_mode = False
+            self.prioritized_store = self._mode_to_store(mode)
+            # self.active_plugins = self.plugin_registry.get_plugins_for(self.prioritized_store)
+
+    def _focus_to_store(self, focus):
+        return {
+            "Art": "art",
+            "Sound": "music",
+            "Video": "video",
+            "Text": "text",
+        }.get(focus, "general")
+
+    def _mode_to_store(self, mode):
+        return {
+            "Art": "art",
+            "Sound": "music",
+            "Video": "video",
+            "Text": "text",
+            "Trading Card Games": "tcg",
+            "Training": "general",
+        }.get(mode, "general")
+
+    def encrypt_fuckery_data(self, data: bytes) -> bytes:
+        if not self.fuckery_key:
+            raise Exception("No encryption key set for Fuckery mode.")
+        f = Fernet(self.fuckery_key)
+        return f.encrypt(data)
+
+    def decrypt_fuckery_data(self, encrypted: bytes) -> bytes:
+        if not self.fuckery_key:
+            raise Exception("No encryption key set for Fuckery mode.")
+        f = Fernet(self.fuckery_key)
+        return f.decrypt(encrypted)
+
+    def store_fuckery_blob(self, data: bytes, meta: dict):
+        encrypted = self.encrypt_fuckery_data(data)
+        self.fuckery_encrypted_blobs.append({"data": encrypted, "meta": meta})
+
+    def get_fuckery_encryption_key(self):
+        return self.fuckery_key.decode() if self.fuckery_key else None
 
     def run_task(self, task_type, prompt, context, plugin=None):
         t0 = time.time()
@@ -48,15 +129,35 @@ class RAEIOAgent:
             if plugin:
                 output = self.plugin_registry.execute_plugin(plugin, prompt=prompt, context=context)
             elif task_type == "browser":
+                if not self.browser_automation:
+                    raise RuntimeError("Browser automation not available")
                 output = self.browser_automation.run_script(context["url"], context["actions"])
-            else:
+            elif task_type == "art":
+                output = generate_art(prompt, context)
+            elif task_type == "sound":
+                output = generate_sound(prompt, context)
+            elif task_type == "video":
+                output = generate_video(prompt, context)
+            elif task_type == "energy":
+                output = transform_energy(prompt, context)
+            elif task_type in ("general", "text"):
                 output = f"Stub output for {task_type}: {prompt}"
+            else:
+                raise ValueError(f"Unknown task type: {task_type}")
             duration = time.time() - t0
             self.memory.log_task(task_type, prompt, context, output, True, duration)
             return output
         except Exception as e:
             duration = time.time() - t0
-            self.memory.log_task(task_type, prompt, context, None, False, duration, extra_metrics={"error": str(e)})
+            self.memory.log_task(
+                task_type,
+                prompt,
+                context,
+                None,
+                False,
+                duration,
+                extra_metrics={"error": str(e)},
+            )
             raise
 
     def analyze_self(self):
@@ -66,4 +167,10 @@ class RAEIOAgent:
         return perf
 
     def speak(self, text, voice=None, emotion=None, speaker_wav=None):
-        return self.tts_manager.synthesize(text, voice=voice, emotion=emotion, speaker_wav=speaker_wav)
+        return self.tts_manager.synthesize(
+            text,
+            voice=voice,
+            emotion=emotion,
+            speaker_wav=speaker_wav,
+        )
+
