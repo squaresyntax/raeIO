@@ -132,6 +132,8 @@ class RAEIOAgent:
                 output = generate_video(prompt, context)
             elif task_type == "energy":
                 output = transform_energy(prompt, context)
+            elif task_type in ("general", "text"):
+                output = f"Stub output for {task_type}: {prompt}"
             else:
                 raise ValueError(f"Unknown task type: {task_type}")
             duration = time.time() - t0
