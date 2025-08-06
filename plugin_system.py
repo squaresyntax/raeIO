@@ -2,9 +2,10 @@ import os
 import importlib.util
 
 class PluginRegistry:
-    def __init__(self, plugin_dir="plugins", logger=None):
+    def __init__(self, plugin_dir="plugins", logger=None, fuckery_mode=False):
         self.plugin_dir = plugin_dir
         self.logger = logger
+        self.fuckery_mode = fuckery_mode
         self.plugins = {}
         os.makedirs(plugin_dir, exist_ok=True)
         self.scan_plugins()
@@ -44,6 +45,9 @@ class PluginRegistry:
 
     def execute_plugin(self, plugin_name, **kwargs):
         plugin = self.load_plugin(plugin_name)
+        meta = getattr(plugin, "PLUGIN_META", {})
+        if self.fuckery_mode and not meta.get("allow_fuckery"):
+            raise PermissionError(f"Plugin {plugin_name} is not allowed in fuckery mode")
         if hasattr(plugin, "run"):
             return plugin.run(**kwargs)
         else:

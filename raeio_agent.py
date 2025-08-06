@@ -10,7 +10,11 @@ class RAEIOAgent:
     def __init__(self, config, logger):
         self.config = config
         self.logger = logger
-        self.memory = TaskMemory(path=config.get("memory_path", "task_memory.jsonl"))
+        self.fuckery_mode = config.get("fuckery_mode", False)
+        self.memory = TaskMemory(
+            path=config.get("memory_path", "task_memory.jsonl"),
+            encrypt=self.fuckery_mode,
+        )
         self.cache_manager = CacheManager(
             temp_dir=config.get("temp_dir", "temp"),
             cache_dir=config.get("cache_dir", "cache"),
@@ -20,7 +24,11 @@ class RAEIOAgent:
             logger=logger
         )
         self.cache_manager.start_auto_clean()
-        self.plugin_registry = PluginRegistry(plugin_dir=config.get("plugin_dir", "plugins"), logger=logger)
+        self.plugin_registry = PluginRegistry(
+            plugin_dir=config.get("plugin_dir", "plugins"),
+            logger=logger,
+            fuckery_mode=self.fuckery_mode,
+        )
         self.tts_manager = TTSManager(
             voice=config.get("tts_voice", "tts_models/en/vctk/vits"),
             cache_dir=config.get("tts_cache_dir", "tts_cache"),
@@ -32,6 +40,8 @@ class RAEIOAgent:
             headless=config.get("browser_headless", True),
             logger=logger
         )
+        if self.fuckery_mode:
+            self.browser_automation.stealth_mode()
 
     def run_task(self, task_type, prompt, context, plugin=None):
         t0 = time.time()
