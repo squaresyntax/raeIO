@@ -11,6 +11,7 @@
 - **Advanced Analytics**: Agent performance, task memory, error tracking.
 - **Talkback/TTS**: Selectable voices/tonality, instant output playback.
 - **Plugin System**: Extend with your own Python plugins.
+- **Update Manager**: Fetch models or plugins from local paths or git with version checks, signature validation, and rollback.
 - **Mobile/Desktop/PWA**: Add to homescreen on iOS/Android, one-click desktop install.
 - **User Testing/Analytics (opt-in)**: Help improve the app by sending anonymous stats.
 
