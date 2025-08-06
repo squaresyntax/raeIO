@@ -1,12 +1,11 @@
 #!/bin/bash
-echo "Installing Python, pip, dependencies, and Bank Gothic font..."
+# macOS wrapper that defers to install.sh after ensuring the OS is correct.
 
-# macOS
-brew install python3
-pip3 install -r requirements.txt
+if [[ "$(uname)" != "Darwin" ]]; then
+    echo "This installer is intended to be run on macOS."
+    exit 1
+fi
 
-# Install Bank Gothic font (use free Share Tech Mono for demo)
-mkdir -p ~/Library/Fonts
-curl -Lo ~/Library/Fonts/ShareTechMono-Regular.ttf https://github.com/google/fonts/raw/main/ofl/sharetechmono/ShareTechMono-Regular.ttf
+DIR="$(cd "$(dirname "$0")" && pwd)"
+bash "$DIR/install.sh"
 
-echo "Installation complete."

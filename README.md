@@ -14,13 +14,30 @@
 - **Mobile/Desktop/PWA**: Add to homescreen on iOS/Android, one-click desktop install.
 - **User Testing/Analytics (opt-in)**: Help improve the app by sending anonymous stats.
 
+## Installation
+
+### Linux / macOS
+
+1. Make the script executable if necessary: `chmod +x install.sh`.
+2. Run `./install.sh` and follow the prompts. The script detects your OS,
+   installs Python 3, required pip packages, and downloads Playwright
+   browser binaries.
+
+### Windows
+
+1. Double-click `install.bat` or run it from a command prompt.
+   It verifies that Python 3 is installed, installs pip packages and
+   executes `playwright install`.
+
+Both scripts attempt to download a free font (Share Tech Mono) and provide
+clear error messages if required system tools like `apt` or Homebrew are
+missing.
+
 ## Quickstart
 
-1. `pip install streamlit TTS playwright pyyaml`
-2. `playwright install`
-3. `streamlit run ui.py`
-4. [Optional] Use PyInstaller or Briefcase for desktop app.
-5. For mobile, open the app in your browser and "Add to Homescreen".
+1. `streamlit run ui.py`
+2. [Optional] Use PyInstaller or Briefcase for desktop app.
+3. For mobile, open the app in your browser and "Add to Homescreen".
 
 ## UX Best Practices Used
 
