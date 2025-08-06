@@ -1,16 +1,13 @@
-import os
-import importlib.util
+import sys
 from pathlib import Path
 
-PLUGIN_SYSTEM_PATH = Path(__file__).resolve().parent.parent / "plugin_system.py"
-spec = importlib.util.spec_from_file_location("plugin_system", PLUGIN_SYSTEM_PATH)
-plugin_system = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(plugin_system)
-PluginRegistry = plugin_system.PluginRegistry
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from plugin_system import PluginRegistry
 
 
 def test_example_plugin_discovery_and_execution():
-    plugin_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "plugins"))
+    plugin_dir = Path(__file__).resolve().parent.parent / "plugins"
     registry = PluginRegistry(plugin_dir=plugin_dir)
     plugins = registry.list_plugins()
     assert any(p["name"] == "example_plugin" for p in plugins)
