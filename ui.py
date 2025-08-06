@@ -6,7 +6,8 @@ if "agent" not in st.session_state:
 agent = st.session_state["agent"]
 
 # Custom CSS for Bank Gothic, white text, black background, deep purple buttons
-st.markdown("""
+st.markdown(
+    """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
 html, body, [class*="css"]  {
@@ -27,10 +28,18 @@ html, body, [class*="css"]  {
     border: 2px solid #fff !important;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 categories = [
-    "Art", "Sound", "Video", "Text", "Trading Card Games", "Fuckery", "Training"
+    "Art",
+    "Sound",
+    "Video",
+    "Text",
+    "Trading Card Games",
+    "Fuckery",
+    "Training",
 ]
 cat = st.sidebar.radio("Select Category/Mode", categories, index=0)
 
@@ -41,7 +50,7 @@ if cat == "Fuckery":
     feature_focus = st.sidebar.selectbox(
         "Choose primary focus:",
         ["Art", "Sound", "Video", "Text"],
-        index=0
+        index=0,
     )
     agent.set_mode(cat, feature_focus)
     key = agent.get_fuckery_encryption_key()
@@ -58,11 +67,23 @@ descriptions = {
     "Text": "Prioritizes text generation, summarization, legal/web Q&A.",
     "Trading Card Games": "Optimizes for TCG/CCG data, deck analysis, and plugins.",
     "Fuckery": "Stress-testing! All files and content are encrypted in stealth mode.",
-    "Training": "Focuses on data ingestion, analysis, and embedding; disables output generation."
+    "Training": "Focuses on data ingestion, analysis, and embedding; disables output generation.",
 }
 st.sidebar.info(descriptions[cat])
 st.markdown(fuckery_key_message)
 
 st.header("RAE.IO Agent")
-st.write("Select a mode from the sidebar to get started.")
+prompt = st.text_input("Enter a prompt")
+run_btn = st.button("Run Task")
+
+if run_btn and prompt.strip():
+    try:
+        output = agent.run_task(cat.lower(), prompt, {})
+        st.success(f"Task output: {output}")
+    except Exception as e:
+        st.error(f"Error: {e}")
+elif run_btn:
+    st.warning("Please enter a prompt.")
+
 # Extend here with specific UI for each mode, file upload, query, etc.
+
