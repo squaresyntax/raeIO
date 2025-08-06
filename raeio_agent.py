@@ -6,6 +6,9 @@ from plugin_system import PluginRegistry
 from tts_manager import TTSManager
 from browser_automation import BrowserAutomation
 
+from policy_manager import PolicyManager, EmergencyStop
+from safety_enforcement import SafetyManager
+
 class RAEIOAgent:
     def __init__(self, config, logger):
         self.config = config
@@ -33,18 +36,43 @@ class RAEIOAgent:
             logger=logger
         )
 
+        policy_path = config.get("policy_config_path", "config.yaml")
+        self.policy_manager = PolicyManager(policy_path)
+        self.safety_manager = SafetyManager(
+            resource_limits=self.policy_manager.config.get("resource_limits", {}),
+            privacy_settings=self.policy_manager.config.get("privacy_settings", {}),
+            action_whitelist=self.policy_manager.config.get("security", {}).get(
+                "action_whitelist", []
+            ),
+            logger=logger,
+        )
+
     def run_task(self, task_type, prompt, context, plugin=None):
         t0 = time.time()
+
+        if self.policy_manager.stopped.is_set() or getattr(self.safety_manager, "stopped", False):
+            raise EmergencyStop("Emergency stop activated.")
+
         try:
+            self.safety_manager.enforce_resource_limits()
+            self.safety_manager.check_action(task_type)
+
             if plugin:
                 output = self.plugin_registry.execute_plugin(plugin, prompt=prompt, context=context)
             elif task_type == "browser":
                 output = self.browser_automation.run_script(context["url"], context["actions"])
             else:
                 output = f"Stub output for {task_type}: {prompt}"
+
+            output = self.safety_manager.scrub_data(output)
+
             duration = time.time() - t0
             self.memory.log_task(task_type, prompt, context, output, True, duration)
             return output
+        except EmergencyStop:
+            duration = time.time() - t0
+            self.memory.log_task(task_type, prompt, context, None, False, duration, extra_metrics={"error": "EmergencyStop"})
+            raise
         except Exception as e:
             duration = time.time() - t0
             self.memory.log_task(task_type, prompt, context, None, False, duration, extra_metrics={"error": str(e)})
