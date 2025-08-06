@@ -1,12 +1,24 @@
-#!/bin/bash
-echo "Installing Python, pip, dependencies, and Bank Gothic font..."
+#!/usr/bin/env bash
+set -e
 
-# macOS
-brew install python3
+# Install Python if missing
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Python3 not found. Attempting to install via Homebrew..."
+  if command -v brew >/dev/null 2>&1; then
+    brew install python
+  else
+    echo "Homebrew not found. Please install Homebrew and rerun this script: https://brew.sh"
+    exit 1
+  fi
+fi
+
+# Upgrade pip and install project requirements
+python3 -m pip install --upgrade pip
 pip3 install -r requirements.txt
 
-# Install Bank Gothic font (use free Share Tech Mono for demo)
-mkdir -p ~/Library/Fonts
-curl -Lo ~/Library/Fonts/ShareTechMono-Regular.ttf https://github.com/google/fonts/raw/main/ofl/sharetechmono/ShareTechMono-Regular.ttf
+# Install Playwright and browser binaries
+pip3 install playwright
+python3 -m playwright install
 
 echo "Installation complete."
+

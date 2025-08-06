@@ -14,13 +14,45 @@
 - **Mobile/Desktop/PWA**: Add to homescreen on iOS/Android, one-click desktop install.
 - **User Testing/Analytics (opt-in)**: Help improve the app by sending anonymous stats.
 
+## Installation
+
+Run the installer for your platform to set up Python, project requirements, and Playwright browsers.
+
+### Linux
+```
+chmod +x install.sh
+./install.sh
+```
+
+### macOS
+```
+chmod +x install.command
+./install.command
+```
+
+### Windows
+Double-click `install.bat` in Explorer or run:
+```
+install.bat
+```
+
+## Packaging
+
+### Desktop (Windows/macOS/Linux)
+Use [PyInstaller](https://www.pyinstaller.org/) to bundle the app into a standalone executable:
+```
+pip install pyinstaller
+pyinstaller launch_raeio.spec
+```
+
+### Mobile (Android/iOS)
+The project can be packaged with tools like [Kivy](https://kivy.org/) or [Buildozer](https://github.com/kivy/buildozer). Refer to their documentation for platform-specific instructions.
+
 ## Quickstart
 
-1. `pip install streamlit TTS playwright pyyaml`
-2. `playwright install`
-3. `streamlit run ui.py`
-4. [Optional] Use PyInstaller or Briefcase for desktop app.
-5. For mobile, open the app in your browser and "Add to Homescreen".
+1. `streamlit run ui.py`
+2. [Optional] Use PyInstaller or Briefcase for desktop app.
+3. For mobile, open the app in your browser and "Add to Homescreen".
 
 ## UX Best Practices Used
 

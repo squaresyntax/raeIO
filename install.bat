@@ -1,17 +1,19 @@
 @echo off
-echo Installing Python, pip, dependencies, and Bank Gothic font...
-
-REM Windows
-where python
-IF ERRORLEVEL 1 (
-    echo Please install Python 3.10+ before running this script.
+REM Install Python if missing
+where python >nul 2>&1
+IF %ERRORLEVEL% NEQ 0 (
+    echo Python3 not found. Please install it from https://www.python.org/downloads/ and re-run this script.
     pause
-    exit /b
+    exit /b 1
 )
+
+REM Upgrade pip and install requirements
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
-REM Install Bank Gothic font (use Share Tech Mono as fallback)
-powershell -Command "Invoke-WebRequest -OutFile %WINDIR%\Fonts\ShareTechMono-Regular.ttf https://github.com/google/fonts/raw/main/ofl/sharetechmono/ShareTechMono-Regular.ttf"
+REM Install Playwright and browser binaries
+pip install playwright
+python -m playwright install
 
 echo Installation complete.
 pause
