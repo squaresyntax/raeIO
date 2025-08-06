@@ -5,6 +5,7 @@ from cache_manager import CacheManager
 from plugin_system import PluginRegistry
 from tts_manager import TTSManager
 from browser_automation import BrowserAutomation
+from model_registry import ModelRegistry
 
 class RAEIOAgent:
     def __init__(self, config, logger):
@@ -32,6 +33,7 @@ class RAEIOAgent:
             headless=config.get("browser_headless", True),
             logger=logger
         )
+        self.model_registry = ModelRegistry(config.get("models", {}), logger=logger)
 
     def run_task(self, task_type, prompt, context, plugin=None):
         t0 = time.time()
@@ -41,7 +43,8 @@ class RAEIOAgent:
             elif task_type == "browser":
                 output = self.browser_automation.run_script(context["url"], context["actions"])
             else:
-                output = f"Stub output for {task_type}: {prompt}"
+                adapter = self.model_registry.get_adapter(task_type)
+                output = adapter(prompt, context)
             duration = time.time() - t0
             self.memory.log_task(task_type, prompt, context, output, True, duration)
             return output
