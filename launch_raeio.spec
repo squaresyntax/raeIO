@@ -3,14 +3,15 @@
 from PyInstaller.utils.hooks import collect_data_files
 
 
-streamlit_datas = collect_data_files("streamlit")
+# Bundle Streamlit's data files and the Streamlit app script.
+datas = [("ui.py", ".")] + collect_data_files("streamlit")
 
 
 a = Analysis(
     ['launch_raeio.py'],
     pathex=[],
     binaries=[],
-    datas=streamlit_datas,
+    datas=datas,
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
