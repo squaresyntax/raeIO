@@ -1,15 +1,48 @@
 import os
 import time
+from dataclasses import dataclass, field
+from cryptography.fernet import Fernet
+
 from task_memory import TaskMemory
 from cache_manager import CacheManager
 from plugin_system import PluginRegistry
 from tts_manager import TTSManager
 from browser_automation import BrowserAutomation
 
+
+@dataclass
+class ModeFlags:
+    """Holds runtime mode toggles for the agent."""
+    fuckery_mode: bool = False
+    stealth_mode: bool = False
+    training_mode: bool = False
+    fuckery_key: bytes | None = field(default=None, repr=False)
+
+    def enable_fuckery(self) -> None:
+        self.fuckery_mode = True
+        self.stealth_mode = True
+        if not self.fuckery_key:
+            self.fuckery_key = Fernet.generate_key()
+
+    def disable_fuckery(self) -> None:
+        self.fuckery_mode = False
+        self.stealth_mode = False
+
+    def encrypt(self, data: bytes) -> bytes:
+        if not self.fuckery_key:
+            raise ValueError("No encryption key set for fuckery mode")
+        return Fernet(self.fuckery_key).encrypt(data)
+
+    def decrypt(self, data: bytes) -> bytes:
+        if not self.fuckery_key:
+            raise ValueError("No encryption key set for fuckery mode")
+        return Fernet(self.fuckery_key).decrypt(data)
+
 class RAEIOAgent:
     def __init__(self, config, logger):
         self.config = config
         self.logger = logger
+        self.flags = ModeFlags()
         self.memory = TaskMemory(path=config.get("memory_path", "task_memory.jsonl"))
         self.cache_manager = CacheManager(
             temp_dir=config.get("temp_dir", "temp"),
@@ -32,6 +65,27 @@ class RAEIOAgent:
             headless=config.get("browser_headless", True),
             logger=logger
         )
+        self._propagate_flags()
+
+    def _propagate_flags(self) -> None:
+        for subsystem in (
+            self.memory,
+            self.cache_manager,
+            self.plugin_registry,
+            self.tts_manager,
+            self.browser_automation,
+        ):
+            if hasattr(subsystem, "update_mode_flags"):
+                subsystem.update_mode_flags(self.flags)
+
+    def set_mode(self, mode: str, feature_focus: str | None = None) -> None:
+        self.flags.training_mode = False
+        self.flags.disable_fuckery()
+        if mode == "Fuckery":
+            self.flags.enable_fuckery()
+        elif mode == "Training":
+            self.flags.training_mode = True
+        self._propagate_flags()
 
     def run_task(self, task_type, prompt, context, plugin=None):
         t0 = time.time()

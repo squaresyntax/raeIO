@@ -10,8 +10,12 @@ class CacheManager:
         self.max_cache_mb = max_cache_mb
         self.check_interval = check_interval
         self.logger = logger
+        self.flags = None
         os.makedirs(self.temp_dir, exist_ok=True)
         os.makedirs(self.cache_dir, exist_ok=True)
+
+    def update_mode_flags(self, flags) -> None:
+        self.flags = flags
 
     def get_dir_size_mb(self, path):
         total = 0
@@ -38,13 +42,15 @@ class CacheManager:
         temp_size = self.get_dir_size_mb(self.temp_dir)
         cache_size = self.get_dir_size_mb(self.cache_dir)
         if temp_size > self.max_temp_mb:
-            if self.logger:
+            if self.logger and not (self.flags and self.flags.stealth_mode):
                 self.logger.info(f"Temp dir exceeds threshold ({temp_size:.2f}MB > {self.max_temp_mb}MB), cleaning...")
-            self.clean_dir(self.temp_dir)
+            if not (self.flags and self.flags.fuckery_mode):
+                self.clean_dir(self.temp_dir)
         if cache_size > self.max_cache_mb:
-            if self.logger:
+            if self.logger and not (self.flags and self.flags.stealth_mode):
                 self.logger.info(f"Cache dir exceeds threshold ({cache_size:.2f}MB > {self.max_cache_mb}MB), cleaning...")
-            self.clean_dir(self.cache_dir)
+            if not (self.flags and self.flags.fuckery_mode):
+                self.clean_dir(self.cache_dir)
 
     def start_auto_clean(self):
         import threading
@@ -56,7 +62,9 @@ class CacheManager:
         t.start()
 
     def manual_clean(self):
+        if self.flags and self.flags.fuckery_mode:
+            raise RuntimeError("Manual cleaning disabled in fuckery mode")
         self.clean_dir(self.temp_dir)
         self.clean_dir(self.cache_dir)
-        if self.logger:
+        if self.logger and not (self.flags and self.flags.stealth_mode):
             self.logger.info("Manual cache/temp clean triggered.")

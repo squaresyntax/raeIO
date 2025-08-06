@@ -8,6 +8,10 @@ class TaskMemory:
         self.path = path
         self.max_entries = max_entries
         self._create_file()
+        self.flags = None
+
+    def update_mode_flags(self, flags) -> None:
+        self.flags = flags
 
     def _create_file(self):
         if not os.path.exists(self.path):
@@ -15,6 +19,8 @@ class TaskMemory:
                 pass
 
     def log_task(self, task_type, prompt, context, output_path, success, duration, extra_metrics=None):
+        if self.flags and self.flags.stealth_mode:
+            return
         entry = {
             "timestamp": datetime.utcnow().isoformat(),
             "task_type": task_type,
@@ -25,8 +31,11 @@ class TaskMemory:
             "duration": duration,
             "metrics": extra_metrics or {},
         }
+        line = json.dumps(entry)
+        if self.flags and self.flags.fuckery_mode:
+            line = self.flags.encrypt(line.encode()).decode()
         with open(self.path, "a") as f:
-            f.write(json.dumps(entry) + "\n")
+            f.write(line + "\n")
         self._prune()
 
     def _prune(self):
@@ -39,7 +48,15 @@ class TaskMemory:
     def get_recent(self, n=50):
         with open(self.path, "r") as f:
             lines = f.readlines()
-        return [json.loads(line) for line in lines[-n:]]
+        result = []
+        for line in lines[-n:]:
+            line = line.strip()
+            if not line:
+                continue
+            if self.flags and self.flags.fuckery_mode:
+                line = self.flags.decrypt(line.encode()).decode()
+            result.append(json.loads(line))
+        return result
 
     def analyze_performance(self, n=100):
         entries = self.get_recent(n)

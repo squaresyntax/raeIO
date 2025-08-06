@@ -6,8 +6,12 @@ class PluginRegistry:
         self.plugin_dir = plugin_dir
         self.logger = logger
         self.plugins = {}
+        self.flags = None
         os.makedirs(plugin_dir, exist_ok=True)
         self.scan_plugins()
+
+    def update_mode_flags(self, flags) -> None:
+        self.flags = flags
 
     def scan_plugins(self):
         self.plugins = {}
@@ -43,6 +47,8 @@ class PluginRegistry:
         return result
 
     def execute_plugin(self, plugin_name, **kwargs):
+        if self.flags and (self.flags.stealth_mode or self.flags.training_mode):
+            raise RuntimeError("Plugin execution disabled in current mode")
         plugin = self.load_plugin(plugin_name)
         if hasattr(plugin, "run"):
             return plugin.run(**kwargs)

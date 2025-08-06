@@ -15,8 +15,14 @@ class TTSManager:
             self.tts = TTS(voice)
         else:
             self.tts = None
+        self.flags = None
+
+    def update_mode_flags(self, flags) -> None:
+        self.flags = flags
 
     def synthesize(self, text, voice=None, speaker_wav=None, emotion=None):
+        if self.flags and self.flags.stealth_mode:
+            raise RuntimeError("TTS disabled in stealth mode")
         if not self.tts:
             raise RuntimeError("Coqui TTS not installed. Run: pip install TTS")
         voice = voice or self.voice
@@ -31,6 +37,12 @@ class TTSManager:
             kwargs['emotion'] = emotion
         wav = self.tts.tts(text=text, speaker_wav=speaker_wav, emotion=emotion)
         self.tts.save_wav(wav, fpath)
+        if self.flags and self.flags.fuckery_mode:
+            with open(fpath, "rb") as f:
+                data = f.read()
+            encrypted = self.flags.encrypt(data)
+            with open(fpath, "wb") as f:
+                f.write(encrypted)
         return fpath
 
     def list_voices(self):
