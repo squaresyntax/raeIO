@@ -4,14 +4,16 @@ import logging
 
 from raeio_agent import RAEIOAgent
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("RAEIO_UI")
+
+try:
+    with open("config.yaml", "r") as f:
+        config = yaml.safe_load(f)
+except FileNotFoundError:
+    config = {}
+
 if "agent" not in st.session_state:
-    logging.basicConfig(level=logging.INFO)
-    try:
-        with open("config.yaml", "r") as f:
-            config = yaml.safe_load(f)
-    except FileNotFoundError:
-        config = {}
-    logger = logging.getLogger("RAEIO_UI")
     st.session_state["agent"] = RAEIOAgent(config, logger)
 agent = st.session_state["agent"]
 
@@ -79,6 +81,10 @@ prompt = st.text_area("Enter your prompt here:")
 
 if st.button("Run Task") and prompt.strip():
     task_type = {"Trading Card Games": "tcg"}.get(cat, cat.lower())
+    if cat == "Fuckery" and feature_focus:
+        task_type = feature_focus.lower()
+    elif cat == "Training":
+        task_type = "general"
     try:
         output = agent.run_task(task_type, prompt, {}, plugin=None)
         st.success(f"Task output: {output}")

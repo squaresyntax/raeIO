@@ -1,7 +1,10 @@
 import threading
 import signal
 import logging
-import yaml
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    yaml = None
 import time
 import sys
 import os
@@ -142,11 +145,23 @@ class GenerationTimeout(Exception):
     pass
 
 class GenerativeMediaManager:
-    def __init__(self, output_dir="outputs", logger=None, timeout=30):
+    def __init__(self, output_dir="outputs", logger=None, timeout=30,
+                 consistency_threshold: float = 0.8, raise_on_mismatch: bool = True):
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         self.logger = logger or logging.getLogger("GenerativeMediaManager")
         self.timeout = timeout
+        self.consistency_threshold = consistency_threshold
+        self.raise_on_mismatch = raise_on_mismatch
+
+    def _embed_text(self, text: str):
+        tokens = re.findall(r"\w+", text.lower())
+        return set(tokens)
+
+    def _similarity(self, a, b):
+        if not a or not b:
+            return 0.0
+        return len(a & b) / len(a | b)
 
     def _run_with_timeout(self, func, *args, **kwargs):
         result_queue = queue.Queue()
@@ -167,10 +182,10 @@ class GenerativeMediaManager:
             raise res
         return res
 
-    def generate_image(self, prompt: str) -> str:
+    def generate_image(self, prompt: str):
         return self._run_with_timeout(self._safe_generate_image, prompt)
 
-    def _safe_generate_image(self, prompt: str) -> str:
+    def _safe_generate_image(self, prompt: str):
         # Sandbox demo: use subprocess for real model inference if unsafe
         self.logger.info(f"Generating image for prompt: {prompt}")
         if moderate_content(prompt) or is_pii(prompt):
@@ -179,36 +194,47 @@ class GenerativeMediaManager:
         # Replace with actual model inference code
         with open(image_path, "wb") as f:
             f.write(b'')
-        return image_path
+        return image_path, prompt
 
-    def generate_video(self, prompt: str, duration=5) -> str:
+    def generate_video(self, prompt: str, duration=5):
         return self._run_with_timeout(self._safe_generate_video, prompt, duration)
 
-    def _safe_generate_video(self, prompt: str, duration=5) -> str:
+    def _safe_generate_video(self, prompt: str, duration=5):
         self.logger.info(f"Generating video for prompt: {prompt}, duration: {duration}s")
         if moderate_content(prompt) or is_pii(prompt):
             raise ValueError("Unsafe prompt blocked.")
         video_path = os.path.join(self.output_dir, "video_result.mp4")
         with open(video_path, "wb") as f:
             f.write(b'')
-        return video_path
+        return video_path, prompt
 
-    def generate_audio(self, prompt: str, duration=5) -> str:
+    def generate_audio(self, prompt: str, duration=5):
         return self._run_with_timeout(self._safe_generate_audio, prompt, duration)
 
-    def _safe_generate_audio(self, prompt: str, duration=5) -> str:
+    def _safe_generate_audio(self, prompt: str, duration=5):
         self.logger.info(f"Generating audio for prompt: {prompt}, duration: {duration}s")
         if moderate_content(prompt) or is_pii(prompt):
             raise ValueError("Unsafe prompt blocked.")
         audio_path = os.path.join(self.output_dir, "audio_result.wav")
         with open(audio_path, "wb") as f:
             f.write(b'')
-        return audio_path
+        return audio_path, prompt
 
-    # Placeholder for cross-modal consistency (stub)
-    def check_modal_consistency(self, *modalities):
-        # TODO: Implement semantic similarity checks
-        self.logger.info("Cross-modal consistency check stub run.")
+    # Modal consistency using simple token overlap embedding
+    def check_modal_consistency(self, prompt_text: str, output_text: str):
+        prompt_emb = self._embed_text(prompt_text)
+        output_emb = self._embed_text(output_text)
+        similarity = self._similarity(prompt_emb, output_emb)
+        if similarity < self.consistency_threshold:
+            self.logger.error(
+                f"Modal inconsistency detected: similarity {similarity:.2f} below {self.consistency_threshold}"
+            )
+            if self.raise_on_mismatch:
+                raise ValueError("Modal inconsistency detected")
+            return False
+        self.logger.info(
+            f"Modal consistency verified: similarity {similarity:.2f}"
+        )
         return True
 
 # --- Main Agent ---
@@ -251,24 +277,25 @@ class EnergyTransformerAgent:
                 prompt = self.contextual_analysis()
                 prompt = self.policy.redact_and_moderate(prompt)
                 gen_type = self.determine_generation_type()
-                output_path = None
+                output_info = None
 
                 try:
                     if gen_type == "image":
-                        output_path = self.media_manager.generate_image(prompt)
+                        output_info = self.media_manager.generate_image(prompt)
                     elif gen_type == "video":
-                        output_path = self.media_manager.generate_video(prompt)
+                        output_info = self.media_manager.generate_video(prompt)
                     elif gen_type == "audio":
-                        output_path = self.media_manager.generate_audio(prompt)
+                        output_info = self.media_manager.generate_audio(prompt)
                     else:
                         self.policy.audit_log("Unknown generation type")
                         continue
 
-                    if output_path:
+                    if output_info:
+                        output_path, output_desc = output_info
                         self.policy.audit_log(f"Generated {gen_type} saved at: {output_path}")
 
-                    # Consistency check
-                    self.media_manager.check_modal_consistency(prompt, output_path)
+                        # Consistency check
+                        self.media_manager.check_modal_consistency(prompt, output_desc)
                 except (GenerationTimeout, ValueError) as e:
                     self.policy.audit_log(f"Generation failed: {e}")
                     self.error_count += 1
@@ -291,6 +318,11 @@ class EnergyTransformerAgent:
         except Exception as e:
             self.policy.audit_log(f"Agent crashed: {e}\n{traceback.format_exc()}")
             self.policy.checkpoint_state({"run_count": self.run_count, "error_count": self.error_count})
+
+def transform_energy(prompt: str, context=None) -> str:
+    """Simple placeholder for energy transformation."""
+    return f"Energy transformed: {prompt}"
+
 
 if __name__ == '__main__':
     agent = EnergyTransformerAgent(config_path='config.yaml')

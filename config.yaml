@@ -1,12 +1,26 @@
-memory_path: "task_memory.jsonl"
-temp_dir: "temp"
-cache_dir: "cache"
-max_temp_mb: 500
-max_cache_mb: 500
-cache_check_interval: 300
-plugin_dir: "plugins"
-tts_voice: "tts_models/en/vctk/vits"
-tts_cache_dir: "tts_cache"
-browser_user_agent: null
-browser_proxy: null
-browser_headless: true
+{
+  "memory_path": "task_memory.jsonl",
+  "temp_dir": "temp",
+  "cache_dir": "cache",
+  "max_temp_mb": 500,
+  "max_cache_mb": 500,
+  "cache_check_interval": 300,
+  "plugin_dir": "plugins",
+  "tts_voice": "tts_models/en/vctk/vits",
+  "tts_cache_dir": "tts_cache",
+  "browser_user_agent": null,
+  "browser_proxy": null,
+  "browser_headless": true,
+  "security": {
+    "action_whitelist": ["read", "write"]
+  },
+  "resource_limits": {
+    "memory_mb": 2048,
+    "cpu_percent": 90
+  },
+  "privacy_settings": {
+    "redact_pii": true,
+    "use_proxy": false
+  }
+}
+
