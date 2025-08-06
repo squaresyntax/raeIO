@@ -55,10 +55,12 @@ class PolicyManager:
         self.logger.info(f"Configuration loaded from {path}")
 
     def check_action(self, action: str):
-        allowed = self.config.get('security', {}).get('action_whitelist', [])
-        if action not in allowed:
-            self.logger.warning(f"Action '{action}' not permitted.")
-            raise PermissionError(f"Action '{action}' is not allowed by policy.")
+        security_cfg = self.config.get('security', {})
+        if security_cfg.get('enforce_action_whitelist', True):
+            allowed = security_cfg.get('action_whitelist', [])
+            if action not in allowed:
+                self.logger.warning(f"Action '{action}' not permitted.")
+                raise PermissionError(f"Action '{action}' is not allowed by policy.")
         self.logger.info(f"Action '{action}' permitted.")
 
     def enforce_resource_limits(self):
@@ -104,19 +106,21 @@ class PolicyManager:
 
     def enforce_anonymity(self):
         # STUB: Add proxy to requests if used
-        if self.config['privacy_settings'].get('use_proxy', False):
-            proxy = self.config['privacy_settings'].get('proxy_url')
+        if self.config.get('privacy_settings', {}).get('use_proxy', False):
+            proxy = self.config.get('privacy_settings', {}).get('proxy_url')
             self.logger.info(f"Proxy enabled: {proxy}")
         else:
             self.logger.info("Proxy not enabled.")
 
     def redact_and_moderate(self, text):
+        filters = self.config.get('safety_filters', {})
+        privacy_cfg = self.config.get('privacy_settings', {})
         # Redact PII
-        if self.config['privacy_settings'].get('redact_pii', False) and is_pii(text):
+        if filters.get('enable_pii_filter', True) and privacy_cfg.get('redact_pii', False) and is_pii(text):
             self.logger.warning("PII detected and redacted.")
             return "[REDACTED]"
         # Moderate NSFW
-        if moderate_content(text):
+        if filters.get('enable_nsfw_filter', True) and moderate_content(text):
             self.logger.warning("NSFW content detected and blocked.")
             return "[CONTENT MODERATION BLOCKED]"
         return text
@@ -142,11 +146,12 @@ class GenerationTimeout(Exception):
     pass
 
 class GenerativeMediaManager:
-    def __init__(self, output_dir="outputs", logger=None, timeout=30):
+    def __init__(self, output_dir="outputs", logger=None, timeout=30, safety_config=None):
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         self.logger = logger or logging.getLogger("GenerativeMediaManager")
         self.timeout = timeout
+        self.safety_config = safety_config or {}
 
     def _run_with_timeout(self, func, *args, **kwargs):
         result_queue = queue.Queue()
@@ -173,7 +178,11 @@ class GenerativeMediaManager:
     def _safe_generate_image(self, prompt: str) -> str:
         # Sandbox demo: use subprocess for real model inference if unsafe
         self.logger.info(f"Generating image for prompt: {prompt}")
-        if moderate_content(prompt) or is_pii(prompt):
+        if (
+            self.safety_config.get('enable_nsfw_filter', True) and moderate_content(prompt)
+        ) or (
+            self.safety_config.get('enable_pii_filter', True) and is_pii(prompt)
+        ):
             raise ValueError("Unsafe prompt blocked.")
         image_path = os.path.join(self.output_dir, "image_result.png")
         # Replace with actual model inference code
@@ -186,7 +195,11 @@ class GenerativeMediaManager:
 
     def _safe_generate_video(self, prompt: str, duration=5) -> str:
         self.logger.info(f"Generating video for prompt: {prompt}, duration: {duration}s")
-        if moderate_content(prompt) or is_pii(prompt):
+        if (
+            self.safety_config.get('enable_nsfw_filter', True) and moderate_content(prompt)
+        ) or (
+            self.safety_config.get('enable_pii_filter', True) and is_pii(prompt)
+        ):
             raise ValueError("Unsafe prompt blocked.")
         video_path = os.path.join(self.output_dir, "video_result.mp4")
         with open(video_path, "wb") as f:
@@ -198,7 +211,11 @@ class GenerativeMediaManager:
 
     def _safe_generate_audio(self, prompt: str, duration=5) -> str:
         self.logger.info(f"Generating audio for prompt: {prompt}, duration: {duration}s")
-        if moderate_content(prompt) or is_pii(prompt):
+        if (
+            self.safety_config.get('enable_nsfw_filter', True) and moderate_content(prompt)
+        ) or (
+            self.safety_config.get('enable_pii_filter', True) and is_pii(prompt)
+        ):
             raise ValueError("Unsafe prompt blocked.")
         audio_path = os.path.join(self.output_dir, "audio_result.wav")
         with open(audio_path, "wb") as f:
@@ -217,7 +234,8 @@ class EnergyTransformerAgent:
         self.policy = PolicyManager(config_path)
         self.policy.register_signal_handlers()
         self.policy.enforce_anonymity()
-        self.media_manager = GenerativeMediaManager(logger=self.policy.logger)
+        safety_cfg = self.policy.config.get('safety_filters', {})
+        self.media_manager = GenerativeMediaManager(logger=self.policy.logger, safety_config=safety_cfg)
         self.last_state = self.policy.recover_state()
         self.run_count = self.last_state.get("run_count", 0)
         self.error_count = self.last_state.get("error_count", 0)

@@ -18,10 +18,12 @@ class PolicyManager:
             self.config = yaml.safe_load(f)
 
     def check_action(self, action: str):
-        allowed = self.config.get('security', {}).get('action_whitelist', [])
-        if action not in allowed:
-            self.logger.warning(f"Action '{action}' not permitted.")
-            raise PermissionError(f"Action '{action}' is not allowed by policy.")
+        security_cfg = self.config.get('security', {})
+        if security_cfg.get('enforce_action_whitelist', True):
+            allowed = security_cfg.get('action_whitelist', [])
+            if action not in allowed:
+                self.logger.warning(f"Action '{action}' not permitted.")
+                raise PermissionError(f"Action '{action}' is not allowed by policy.")
 
     def enforce_resource_limits(self):
         # Example: pseudo-code, real implementation platform-dependent
@@ -32,7 +34,9 @@ class PolicyManager:
         pass
 
     def apply_privacy(self, data):
-        if self.config['privacy_settings'].get('redact_pii', False):
+        filters = self.config.get('safety_filters', {})
+        privacy_cfg = self.config.get('privacy_settings', {})
+        if filters.get('enable_pii_filter', True) and privacy_cfg.get('redact_pii', False):
             return self.redact_pii(data)
         return data
 
@@ -41,7 +45,7 @@ class PolicyManager:
         return data
 
     def enforce_anonymity(self):
-        if self.config['privacy_settings'].get('use_proxy', False):
+        if self.config.get('privacy_settings', {}).get('use_proxy', False):
             # Route traffic via proxy (see networking code)
             pass
 

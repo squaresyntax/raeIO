@@ -42,3 +42,11 @@
 - **All code has been bug-checked and tested for modularity and reliability**.
 
 ---
+
+## Safety Filters and Legal Considerations
+
+The project includes several safety mechanisms such as PII redaction, NSFW content checks, and action whitelisting.
+These safeguards are enabled by default (`enable_pii_filter`, `enable_nsfw_filter`, `enforce_action_whitelist` set to `true`) to help prevent misuse and comply with applicable laws and platform policies.
+
+You may disable these filters through the `safety_filters` and `security` sections of `config.yaml`, but doing so may expose you to legal liabilities and ethical concerns.
+Users are solely responsible for any content generated or actions performed when safeguards are disabled.

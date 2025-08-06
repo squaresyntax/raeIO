@@ -10,3 +10,16 @@ tts_cache_dir: "tts_cache"
 browser_user_agent: null
 browser_proxy: null
 browser_headless: true
+privacy_settings:
+  redact_pii: true
+  use_proxy: false
+  proxy_url: null
+security:
+  enforce_action_whitelist: true
+  action_whitelist: ["analyze", "generate"]
+resource_limits:
+  memory_mb: 2048
+  cpu_percent: 90
+safety_filters:
+  enable_nsfw_filter: true
+  enable_pii_filter: true
