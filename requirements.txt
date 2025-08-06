@@ -1,2 +1,10 @@
 streamlit
 cryptography
+diffusers
+transformers
+torch
+TTS
+imageio
+imageio-ffmpeg
+soundfile
+numpy
