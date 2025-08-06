@@ -1,0 +1,15 @@
+RAEIO/
+├─ app/
+│  ├─ raeio_app.py        # Unified main app (desktop GUI + CLI)
+│  ├─ ... (all your modules: agent, plugins, browser_automation, etc.)
+│  ├─ config.yaml
+│  ├─ requirements.txt
+├─ install.bat            # Windows installer
+├─ install.sh             # Linux installer
+├─ install.command        # macOS installer
+├─ README.md
+├─ README_UI.md
+├─ HOW_TO_USE.md
+├─ LICENSE
+├─ dist/
+│  ├─ RAEIO.exe           # Compiled Windows desktop EXE
