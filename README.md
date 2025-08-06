@@ -22,6 +22,21 @@
 4. [Optional] Use PyInstaller or Briefcase for desktop app.
 5. For mobile, open the app in your browser and "Add to Homescreen".
 
+## CLI Usage
+
+Run the command-line interface with an explicit mode:
+
+```bash
+python raeio_cli_Version2.py --mode Text --prompt "Hello"
+```
+
+If `--mode` is omitted, the CLI prompts for one and defaults to `Text` when you press Enter:
+
+```bash
+python raeio_cli_Version2.py --prompt "Hello"
+# Select mode [Art, Sound, Video, Text, TCG, Fuckery, Training, Browser] (default Text):
+```
+
 ## UX Best Practices Used
 
 - **Onboarding**: Immediate welcome, quickstart, in-app docs.

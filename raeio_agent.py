@@ -4,7 +4,15 @@ from task_memory import TaskMemory
 from cache_manager import CacheManager
 from plugin_system import PluginRegistry
 from tts_manager import TTSManager
-from browser_automation import BrowserAutomation
+try:
+    from browser_automation import BrowserAutomation  # type: ignore
+except Exception:  # pragma: no cover - allow running without Playwright
+    class BrowserAutomation:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def run_script(self, url, actions):
+            raise RuntimeError("playwright is required for browser automation")
 
 class RAEIOAgent:
     def __init__(self, config, logger):

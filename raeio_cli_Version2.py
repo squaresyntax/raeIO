@@ -1,19 +1,33 @@
 import argparse
-import yaml
 import logging
+try:
+    import yaml  # type: ignore
+except ImportError:  # pragma: no cover - allow running without PyYAML
+    yaml = None
 from raeio_agent import RAEIOAgent
 
 def main():
     parser = argparse.ArgumentParser(description="RAE.IO CLI")
-    parser.add_argument('--mode', choices=['Art', 'Sound', 'Video', 'Text', 'TCG', 'Fuckery', 'Training', 'Browser'], required=True)
+    modes = ['Art', 'Sound', 'Video', 'Text', 'TCG', 'Fuckery', 'Training', 'Browser']
+    parser.add_argument('--mode', choices=modes, help='Operation mode')
     parser.add_argument('--prompt', type=str, help='Prompt for generation/analysis')
     parser.add_argument('--url', type=str, help='URL for browser automation')
     parser.add_argument('--actions', type=str, help='Browser actions as JSON list')
     parser.add_argument('--plugin', type=str, help='Plugin name (optional)')
     args = parser.parse_args()
 
-    with open("config.yaml", "r") as f:
-        config = yaml.safe_load(f)
+    if args.mode is None:
+        default_mode = 'Text'
+        choice = input(
+            f"Select mode [{', '.join(modes)}] (default {default_mode}): "
+        ).strip()
+        args.mode = choice if choice in modes else default_mode
+
+    if yaml is not None:
+        with open("config.yaml", "r") as f:
+            config = yaml.safe_load(f)
+    else:
+        config = {}
     logger = logging.getLogger("RAEIO_CLI")
     agent = RAEIOAgent(config, logger)
 
