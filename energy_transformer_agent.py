@@ -1,7 +1,10 @@
 import threading
 import signal
 import logging
-import yaml
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    yaml = None
 import time
 import sys
 import os
@@ -291,6 +294,11 @@ class EnergyTransformerAgent:
         except Exception as e:
             self.policy.audit_log(f"Agent crashed: {e}\n{traceback.format_exc()}")
             self.policy.checkpoint_state({"run_count": self.run_count, "error_count": self.error_count})
+
+def transform_energy(prompt: str, context=None) -> str:
+    """Simple placeholder for energy transformation."""
+    return f"Energy transformed: {prompt}"
+
 
 if __name__ == '__main__':
     agent = EnergyTransformerAgent(config_path='config.yaml')
