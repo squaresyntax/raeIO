@@ -1,5 +1,5 @@
 import streamlit as st
-from raeio_core import RAEIOAgent
+from raeio_agent import RAEIOAgent
 
 if "agent" not in st.session_state:
     st.session_state["agent"] = RAEIOAgent()
