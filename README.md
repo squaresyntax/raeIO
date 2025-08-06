@@ -38,6 +38,14 @@ After installation, start the UI:
 2. [Optional] Use PyInstaller or Briefcase for a desktop app.
 3. For mobile, open the app in your browser and "Add to Homescreen".
 
+## CLI Usage
+
+Run the CLI with a prompt. By default it operates in **Text** mode when no `--mode` is supplied:
+
+```bash
+python raeio_cli_Version2.py --prompt "Write a short poem about the sky"
+```
+
 ## UX Best Practices Used
 
 - **Onboarding**: Immediate welcome, quickstart, in-app docs.

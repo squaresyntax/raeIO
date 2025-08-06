@@ -1,4 +1,7 @@
-from playwright.sync_api import sync_playwright
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:  # pragma: no cover - fallback when playwright isn't installed
+    sync_playwright = None
 
 class BrowserAutomation:
     def __init__(self, user_agent=None, proxy=None, headless=True, logger=None):
@@ -11,6 +14,8 @@ class BrowserAutomation:
         """
         actions = list of dicts: {type: "click"/"type"/"wait", selector, value}
         """
+        if not sync_playwright:
+            raise RuntimeError("playwright is not installed. Run: pip install playwright")
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=self.headless)
             context_args = {}
