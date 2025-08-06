@@ -39,6 +39,8 @@ class PluginRegistry:
             if not path:
                 raise ImportError(f"Plugin {plugin_name} not found.")
         spec = importlib.util.spec_from_file_location(plugin_name, str(path))
+        if not spec or not spec.loader:
+            raise ImportError(f"Cannot load plugin {plugin_name}")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return module
