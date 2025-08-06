@@ -83,6 +83,10 @@ class RAEIOAgent:
             elif task_type == "browser":
                 if not self.browser_automation:
                     raise RuntimeError("Browser automation dependencies not installed")
+                if "url" not in context or "actions" not in context:
+                    raise ValueError(
+                        "Browser tasks require 'url' and 'actions' in context"
+                    )
                 output = self.browser_automation.run_script(
                     context["url"], context["actions"]
                 )
