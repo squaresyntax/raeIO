@@ -10,3 +10,16 @@ tts_cache_dir: "tts_cache"
 browser_user_agent: null
 browser_proxy: null
 browser_headless: true
+
+security:
+  action_whitelist:
+    - read
+    - write
+
+resource_limits:
+  # limits are in bytes for memory and seconds for CPU time
+  memory: 100000000  # 100 MB
+  cpu_time: 60       # 60 seconds
+
+privacy_settings:
+  redact_pii: true

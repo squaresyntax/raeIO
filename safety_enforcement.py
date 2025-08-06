@@ -1,26 +1,59 @@
+import logging
+from typing import Callable, Any
+
+from policy_manager import (
+    PolicyManager,
+    EmergencyStop,
+    ResourceLimitExceeded,
+)
+
+
 class SafetyManager:
-    def __init__(self, resource_limits, privacy_settings, action_whitelist):
-        self.resource_limits = resource_limits
-        self.privacy_settings = privacy_settings
-        self.action_whitelist = action_whitelist
+    """High-level interface that runs tasks under policy enforcement.
 
-    def check_action(self, action):
-        # Enforce action whitelist/blacklist
-        if action not in self.action_whitelist:
-            raise PermissionError(f"Action {action} not allowed.")
+    The safety manager delegates the actual policy checks to ``PolicyManager``
+    but is responsible for orchestrating the checks and ensuring that any
+    violation halts execution and is logged for audit purposes.
+    """
 
-    def enforce_resource_limits(self):
-        # Check and enforce CPU, memory, etc.
-        pass
+    def __init__(self, policy: PolicyManager):
+        self.policy = policy
+        self.logger = logging.getLogger("SafetyManager")
 
-    def scrub_data(self, data):
-        # Remove PII and sensitive info
-        pass
+    def execute(
+        self, action: str, data: Any, task: Callable[[Any], Any], *args, **kwargs
+    ) -> Any:
+        """Run ``task`` after enforcing policy checks.
+
+        Parameters
+        ----------
+        action:
+            Name of the action the task intends to perform.  Must appear in the
+            policy's action whitelist.
+        data:
+            Data that may need to be scrubbed for privacy before being passed to
+            the task.
+        task:
+            Callable representing the work to be executed.
+        """
+        try:
+            self.policy.check_action(action)
+            self.policy.enforce_resource_limits()
+            safe_data = self.policy.apply_privacy(data)
+            return task(safe_data, *args, **kwargs)
+        except (PermissionError, ResourceLimitExceeded) as exc:
+            self.logger.error(f"Policy violation: {exc}")
+            self.policy.audit_log(f"Policy violation: {exc}")
+            self.policy.stopped.set()
+            raise
+        except EmergencyStop:
+            # Emergency stop already logs via PolicyManager
+            self.logger.critical("Emergency stop invoked during task execution")
+            self.policy.stopped.set()
+            self.policy.audit_log("Emergency stop invoked during task execution")
+            raise
 
     def emergency_stop(self):
-        # Immediately halt all processes
-        pass
+        """Trigger an emergency stop manually."""
+        self.policy.emergency_stop()
 
-    def audit_log(self, event):
-        # Log for later review
-        pass
