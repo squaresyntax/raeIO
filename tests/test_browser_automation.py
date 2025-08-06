@@ -4,6 +4,13 @@ from functools import partial
 
 import pytest
 
+import os
+import sys
+
+# Ensure the project root is on the import path so ``browser_automation`` can
+# be imported when the tests are executed from a different working directory.
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 from browser_automation import BrowserAutomation
 
 

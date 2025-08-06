@@ -16,16 +16,15 @@
 
 ## Quickstart
 
-1. `pip install streamlit TTS playwright pyyaml`
-2. `playwright install`
-3. `streamlit run ui.py`
-4. [Optional] Use PyInstaller or Briefcase for desktop app.
-5. For mobile, open the app in your browser and "Add to Homescreen".
+1. `pip install streamlit TTS pyyaml`
+2. `streamlit run ui.py`
+3. [Optional] Use PyInstaller or Briefcase for desktop app.
+4. For mobile, open the app in your browser and "Add to Homescreen".
 
 ### Browser automation example
 
-The ``BrowserAutomation`` helper can execute simple multi‑page workflows using
-Playwright.  A script consists of a list of action dictionaries:
+The ``BrowserAutomation`` helper can execute simple multi‑page workflows using a
+minimal HTTP-based engine.  A script consists of a list of action dictionaries:
 
 ```python
 from browser_automation import BrowserAutomation
