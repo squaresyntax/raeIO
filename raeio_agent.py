@@ -20,25 +20,46 @@ class RAEIOAgent:
             logger=logger
         )
         self.cache_manager.start_auto_clean()
-        self.plugin_registry = PluginRegistry(plugin_dir=config.get("plugin_dir", "plugins"), logger=logger)
-        self.tts_manager = TTSManager(
-            voice=config.get("tts_voice", "tts_models/en/vctk/vits"),
-            cache_dir=config.get("tts_cache_dir", "tts_cache"),
-            logger=logger
-        )
-        self.browser_automation = BrowserAutomation(
-            user_agent=config.get("browser_user_agent"),
-            proxy=config.get("browser_proxy"),
-            headless=config.get("browser_headless", True),
-            logger=logger
-        )
+
+        features = config.get("features", {})
+
+        if features.get("plugins", {}).get("enabled", True):
+            self.plugin_registry = PluginRegistry(
+                plugin_dir=config.get("plugin_dir", "plugins"),
+                logger=logger
+            )
+        else:
+            self.plugin_registry = None
+
+        if features.get("text_to_speech", {}).get("enabled", True):
+            self.tts_manager = TTSManager(
+                voice=config.get("tts_voice", "tts_models/en/vctk/vits"),
+                cache_dir=config.get("tts_cache_dir", "tts_cache"),
+                logger=logger
+            )
+        else:
+            self.tts_manager = None
+
+        if features.get("browser_automation", {}).get("enabled", True):
+            self.browser_automation = BrowserAutomation(
+                user_agent=config.get("browser_user_agent"),
+                proxy=config.get("browser_proxy"),
+                headless=config.get("browser_headless", True),
+                logger=logger
+            )
+        else:
+            self.browser_automation = None
 
     def run_task(self, task_type, prompt, context, plugin=None):
         t0 = time.time()
         try:
             if plugin:
+                if not self.plugin_registry:
+                    raise RuntimeError("Plugin feature disabled")
                 output = self.plugin_registry.execute_plugin(plugin, prompt=prompt, context=context)
             elif task_type == "browser":
+                if not self.browser_automation:
+                    raise RuntimeError("Browser automation feature disabled")
                 output = self.browser_automation.run_script(context["url"], context["actions"])
             else:
                 output = f"Stub output for {task_type}: {prompt}"
@@ -57,4 +78,6 @@ class RAEIOAgent:
         return perf
 
     def speak(self, text, voice=None, emotion=None, speaker_wav=None):
+        if not self.tts_manager:
+            raise RuntimeError("Text-to-speech feature disabled")
         return self.tts_manager.synthesize(text, voice=voice, emotion=emotion, speaker_wav=speaker_wav)

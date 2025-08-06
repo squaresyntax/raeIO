@@ -22,6 +22,15 @@
 4. [Optional] Use PyInstaller or Briefcase for desktop app.
 5. For mobile, open the app in your browser and "Add to Homescreen".
 
+## Feature Toggles
+
+Configuration options in `config.yaml` include a `features` section controlling core capabilities. Each feature can be enabled or disabled by setting `enabled` to `true` or `false`.
+
+- **plugins** – load external Python plugins.
+- **text_to_speech** – generate speech from text.
+- **browser_automation** – run scripted browser interactions.
+- **safety_filters** – apply censorship and safety policies.  Disabling this removes protections and may produce unsafe or disallowed content.
+
 ## UX Best Practices Used
 
 - **Onboarding**: Immediate welcome, quickstart, in-app docs.

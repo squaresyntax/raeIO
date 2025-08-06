@@ -10,3 +10,13 @@ tts_cache_dir: "tts_cache"
 browser_user_agent: null
 browser_proxy: null
 browser_headless: true
+
+features:
+  plugins:
+    enabled: true
+  text_to_speech:
+    enabled: true
+  browser_automation:
+    enabled: true
+  safety_filters:
+    enabled: true  # Disabling removes censorship and safety checks. Use with caution.
