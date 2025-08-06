@@ -79,7 +79,18 @@ class _DOMParser(HTMLParser):
 
     # Utility --------------------------------------------------------------
     def parse(self, html: str) -> Node:
+        """Parse ``html`` and return the document root.
+
+        The parser instance can be reused across pages so we reset all internal
+        state before feeding new data and call :meth:`close` to make sure all
+        buffered data is processed.
+        """
+
+        self.root = Node("document", {})
+        self.stack = [self.root]
+        self.id_index = {}
         self.feed(html)
+        self.close()
         return self.root
 
 
