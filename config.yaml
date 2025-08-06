@@ -10,3 +10,17 @@ tts_cache_dir: "tts_cache"
 browser_user_agent: null
 browser_proxy: null
 browser_headless: true
+
+security:
+  action_whitelist:
+    - read
+    - write
+
+privacy_settings:
+  redact_pii: true
+  use_proxy: false
+
+resource_limits:
+  memory_mb: 1024
+  cpu_percent: 90
+
