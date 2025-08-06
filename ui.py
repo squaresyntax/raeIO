@@ -76,6 +76,7 @@ if fuckery_key_message:
 
 st.header("RAE.IO Agent")
 prompt = st.text_area("Enter your prompt here:")
+
 if st.button("Run Task") and prompt.strip():
     task_type = {"Trading Card Games": "tcg"}.get(cat, cat.lower())
     try:
@@ -83,4 +84,3 @@ if st.button("Run Task") and prompt.strip():
         st.success(f"Task output: {output}")
     except Exception as e:
         st.error(f"Error: {e}")
-
