@@ -48,3 +48,4 @@ class BrowserAutomation:
         self.headless = True
         self.user_agent = STEALTH_UA
         # Add further stealth tweaks as needed
+        return self

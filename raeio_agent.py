@@ -71,6 +71,8 @@ class RAEIOAgent:
                 self.fuckery_mode = True
                 self.stealth_mode = True
                 self.fuckery_key = Fernet.generate_key()
+                if self.browser_automation:
+                    self.browser_automation.stealth_mode()
             self.prioritized_store = self._focus_to_store(feature_focus)
             # self.active_plugins = self.plugin_registry.get_plugins_for(self.prioritized_store)
         elif mode == "Training":
@@ -85,6 +87,8 @@ class RAEIOAgent:
             self.training_mode = False
             self.prioritized_store = self._mode_to_store(mode)
             # self.active_plugins = self.plugin_registry.get_plugins_for(self.prioritized_store)
+        if hasattr(self, "plugin_registry"):
+            self.plugin_registry.set_fuckery_mode(self.fuckery_mode)
 
     def _focus_to_store(self, focus):
         return {

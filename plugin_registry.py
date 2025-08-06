@@ -76,3 +76,11 @@ class PluginRegistry:
         if hasattr(plugin, "run"):
             return plugin.run(**kwargs)
         raise AttributeError(f"Plugin {plugin_name} has no run()")
+
+    def set_fuckery_mode(self, enabled: bool):
+        """Toggle fuckery mode for the registry.
+
+        This allows the owning agent to enable or disable the runtime
+        restriction logic without needing to recreate the registry.
+        """
+        self.fuckery_mode = enabled
