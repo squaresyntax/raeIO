@@ -1,4 +1,7 @@
-from playwright.sync_api import sync_playwright
+try:
+    from playwright.sync_api import sync_playwright
+except Exception:  # pragma: no cover - handled for environments without playwright
+    sync_playwright = None
 
 class BrowserAutomation:
     def __init__(self, user_agent=None, proxy=None, headless=True, logger=None):
@@ -11,6 +14,8 @@ class BrowserAutomation:
         """
         actions = list of dicts: {type: "click"/"type"/"wait", selector, value}
         """
+        if not sync_playwright:
+            raise RuntimeError("playwright is not installed")
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=self.headless)
             context_args = {}
@@ -36,5 +41,8 @@ class BrowserAutomation:
     def stealth_mode(self):
         # Set headless, random user agent, and proxy for stealth
         self.headless = True
-        self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+        self.user_agent = (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+        )
         # Add further stealth tweaks as needed

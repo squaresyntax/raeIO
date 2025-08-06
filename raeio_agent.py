@@ -17,6 +17,7 @@ class RAEIOAgent:
             max_temp_mb=config.get("max_temp_mb", 500),
             max_cache_mb=config.get("max_cache_mb", 500),
             check_interval=config.get("cache_check_interval", 300),
+            file_ttl=config.get("cache_file_ttl", 60 * 60),
             logger=logger
         )
         self.cache_manager.start_auto_clean()
@@ -58,3 +59,6 @@ class RAEIOAgent:
 
     def speak(self, text, voice=None, emotion=None, speaker_wav=None):
         return self.tts_manager.synthesize(text, voice=voice, emotion=emotion, speaker_wav=speaker_wav)
+
+    def clear_cache(self):
+        self.cache_manager.clear_cache()
