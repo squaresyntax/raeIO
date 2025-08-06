@@ -1,7 +1,7 @@
 import os
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 class TaskMemory:
     def __init__(self, path="task_memory.jsonl", max_entries=10000):
@@ -16,7 +16,7 @@ class TaskMemory:
 
     def log_task(self, task_type, prompt, context, output_path, success, duration, extra_metrics=None):
         entry = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "task_type": task_type,
             "prompt": prompt,
             "context": context,
