@@ -22,6 +22,18 @@
 4. [Optional] Use PyInstaller or Briefcase for desktop app.
 5. For mobile, open the app in your browser and "Add to Homescreen".
 
+## Running Tests
+
+1. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   pip install pytest
+   ```
+2. Run the test suite:
+   ```
+   pytest
+   ```
+
 ## UX Best Practices Used
 
 - **Onboarding**: Immediate welcome, quickstart, in-app docs.
