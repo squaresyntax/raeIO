@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 try:
     import yaml
 except ImportError:  # pragma: no cover - fallback when PyYAML is missing
@@ -15,20 +16,23 @@ except Exception:  # pragma: no cover - minimal stub if dependencies missing
             return f"Stub output for {task_type}: {prompt}"
 
 
+MODES = [
+    "Art",
+    "Sound",
+    "Video",
+    "Text",
+    "TCG",
+    "Fuckery",
+    "Training",
+    "Browser",
+]
+
+
 def main():
     parser = argparse.ArgumentParser(description="RAE.IO CLI")
     parser.add_argument(
         "--mode",
-        choices=[
-            "Art",
-            "Sound",
-            "Video",
-            "Text",
-            "TCG",
-            "Fuckery",
-            "Training",
-            "Browser",
-        ],
+        choices=MODES,
         help="Operation mode",
         default=None,
     )
@@ -39,10 +43,13 @@ def main():
     args = parser.parse_args()
 
     if not args.mode:
-        try:
-            user_mode = input("Select mode [Text]: ").strip()
-            args.mode = user_mode or "Text"
-        except EOFError:
+        if sys.stdin.isatty():
+            try:
+                user_mode = input("Select mode [Text]: ").strip()
+                args.mode = user_mode or "Text"
+            except EOFError:
+                args.mode = "Text"
+        else:
             args.mode = "Text"
 
     if yaml:

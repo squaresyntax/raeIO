@@ -25,6 +25,18 @@ try:
 except ImportError:
     GUI_AVAILABLE = False
 
+MODES = [
+    "Art",
+    "Sound",
+    "Video",
+    "Text",
+    "TCG",
+    "Fuckery",
+    "Training",
+    "Browser",
+]
+
+
 def load_config():
     config_path = "config.yaml"
     if not os.path.exists(config_path):
@@ -40,7 +52,7 @@ def cli_main(agent):
     parser = argparse.ArgumentParser(description="RAE.IO CLI")
     parser.add_argument(
         '--mode',
-        choices=['Art', 'Sound', 'Video', 'Text', 'TCG', 'Fuckery', 'Training', 'Browser'],
+        choices=MODES,
         help='Operation mode',
         default=None,
     )
@@ -51,10 +63,13 @@ def cli_main(agent):
     args = parser.parse_args()
 
     if not args.mode:
-        try:
-            user_mode = input("Select mode [Text]: ").strip()
-            args.mode = user_mode or 'Text'
-        except EOFError:
+        if sys.stdin.isatty():
+            try:
+                user_mode = input("Select mode [Text]: ").strip()
+                args.mode = user_mode or 'Text'
+            except EOFError:
+                args.mode = 'Text'
+        else:
             args.mode = 'Text'
 
     if args.mode == "Browser":

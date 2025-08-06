@@ -28,7 +28,7 @@
 # Run with an explicit mode
 python raeio_cli_Version2.py --mode Art --prompt "Draw a cat"
 
-# Rely on the interactive prompt / default Text mode
+# Rely on the default Text mode (prompts only when run interactively)
 python raeio_cli_Version2.py --prompt "Analyze this text"
 ```
 
