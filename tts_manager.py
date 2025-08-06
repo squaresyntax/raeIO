@@ -6,10 +6,11 @@ except ImportError:
     TTS = None
 
 class TTSManager:
-    def __init__(self, voice="tts_models/en/vctk/vits", cache_dir="tts_cache", logger=None):
+    def __init__(self, voice="tts_models/en/vctk/vits", cache_dir="tts_cache", logger=None, fuckery_mode=False):
         self.voice = voice
         self.logger = logger
         self.cache_dir = cache_dir
+        self.fuckery_mode = fuckery_mode
         os.makedirs(cache_dir, exist_ok=True)
         if TTS:
             self.tts = TTS(voice)
@@ -21,6 +22,8 @@ class TTSManager:
             raise RuntimeError("Coqui TTS not installed. Run: pip install TTS")
         voice = voice or self.voice
         fname = f"{hash((text, voice, emotion, speaker_wav))}.wav"
+        if self.fuckery_mode:
+            fname = "enc_" + fname
         fpath = os.path.join(self.cache_dir, fname)
         if os.path.exists(fpath):
             return fpath

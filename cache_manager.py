@@ -3,13 +3,23 @@ import shutil
 import time
 
 class CacheManager:
-    def __init__(self, temp_dir="temp", cache_dir="cache", max_temp_mb=500, max_cache_mb=500, check_interval=300, logger=None):
+    def __init__(
+        self,
+        temp_dir="temp",
+        cache_dir="cache",
+        max_temp_mb=500,
+        max_cache_mb=500,
+        check_interval=300,
+        logger=None,
+        fuckery_mode=False,
+    ):
         self.temp_dir = temp_dir
         self.cache_dir = cache_dir
         self.max_temp_mb = max_temp_mb
         self.max_cache_mb = max_cache_mb
         self.check_interval = check_interval
         self.logger = logger
+        self.secure_delete = fuckery_mode
         os.makedirs(self.temp_dir, exist_ok=True)
         os.makedirs(self.cache_dir, exist_ok=True)
 
@@ -27,6 +37,11 @@ class CacheManager:
             fpath = os.path.join(path, fname)
             try:
                 if os.path.isfile(fpath) or os.path.islink(fpath):
+                    if self.secure_delete:
+                        with open(fpath, "ba", buffering=0) as f:
+                            length = f.tell()
+                            f.seek(0)
+                            f.write(b"\x00" * length)
                     os.unlink(fpath)
                 elif os.path.isdir(fpath):
                     shutil.rmtree(fpath)
