@@ -41,4 +41,10 @@
 - **All error messages are user-friendly** and actionable.
 - **All code has been bug-checked and tested for modularity and reliability**.
 
----
+## Running Tests
+
+Install dependencies and execute linting and tests::
+
+    pip install -r requirements.txt
+    flake8 tests
+    pytest
