@@ -19,7 +19,11 @@ class PluginRegistry:
     def load_plugin(self, plugin_name):
         path = self.plugins.get(plugin_name)
         if not path:
-            raise ImportError(f"Plugin {plugin_name} not found.")
+            # Rescan in case a new plugin was added after initialization
+            self.scan_plugins()
+            path = self.plugins.get(plugin_name)
+            if not path:
+                raise ImportError(f"Plugin {plugin_name} not found.")
         spec = importlib.util.spec_from_file_location(plugin_name, path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
