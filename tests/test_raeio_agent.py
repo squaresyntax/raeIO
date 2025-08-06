@@ -9,11 +9,13 @@ from raeio_agent import RAEIOAgent
 
 
 def make_agent(tmp_path):
+    plugins_dir = tmp_path / "plugins"
+    plugins_dir.mkdir()
     config = {
         "memory_path": str(tmp_path / "mem.jsonl"),
         "temp_dir": str(tmp_path / "temp"),
         "cache_dir": str(tmp_path / "cache"),
-        "plugin_dir": str(tmp_path / "plugins"),
+        "plugin_dir": str(plugins_dir),
         "tts_cache_dir": str(tmp_path / "tts_cache"),
     }
     return RAEIOAgent(config, logger=logging.getLogger("test"))
@@ -22,7 +24,7 @@ def make_agent(tmp_path):
 def test_run_task_art(tmp_path):
     agent = make_agent(tmp_path)
     result = agent.run_task("art", "sunset", {})
-    assert "Art generated" in result
+    assert os.path.exists(result)
 
 
 def test_run_task_audio(tmp_path):
@@ -40,5 +42,5 @@ def test_run_task_text(tmp_path):
 def test_run_task_unsupported(tmp_path):
     agent = make_agent(tmp_path)
     with pytest.raises(RuntimeError) as exc:
-        agent.run_task("video", "prompt", {})
+        agent.run_task("unknown", "prompt", {})
     assert "Unsupported task type" in str(exc.value)
