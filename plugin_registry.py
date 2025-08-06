@@ -20,6 +20,12 @@ class PluginRegistry:
                 self.plugins[plugin_name] = os.path.join(self.plugin_dir, fname)
 
     def load_plugin(self, plugin_name):
+        # Ensure the plugin list is up to date in case new plugins were
+        # added after the registry was initialized. This helps avoid
+        # integration issues where freshly created plugins cannot be
+        # located until `scan_plugins` or `list_plugins` is called
+        # manually.
+        self.scan_plugins()
         path = self.plugins.get(plugin_name)
         if not path:
             raise ImportError(f"Plugin {plugin_name} not found.")

@@ -14,3 +14,16 @@ def test_example_plugin_execution():
     result = registry.execute_plugin("example_plugin", prompt="hello", context={})
     assert result == "Echo: hello"
 
+
+def test_dynamic_plugin_discovery(tmp_path):
+    """Plugins added after registry initialization should be loadable."""
+    registry = PluginRegistry(plugin_dir=str(tmp_path))
+
+    plugin_path = tmp_path / "dynamic_plugin.py"
+    plugin_path.write_text(
+        "def run(prompt, context):\n    return 'dynamic-' + prompt\n"
+    )
+
+    mod = registry.load_plugin("dynamic_plugin")
+    assert mod.run("test", {}) == "dynamic-test"
+
