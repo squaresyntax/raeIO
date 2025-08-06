@@ -41,7 +41,9 @@ def save_checkpoint(model_path: str, checkpoint_name: Optional[str] = None) -> s
 
     _ensure_checkpoint_dir()
     if checkpoint_name is None:
-        checkpoint_name = datetime.datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        checkpoint_name = datetime.datetime.now(datetime.timezone.utc).strftime(
+            "%Y%m%d%H%M%S"
+        )
     base = os.path.basename(model_path)
     dest = os.path.join(CHECKPOINT_DIR, f"{checkpoint_name}_{base}")
     shutil.copy2(model_path, dest)
