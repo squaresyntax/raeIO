@@ -3,9 +3,18 @@ from raeio_agent import RAEIOAgent
 import yaml
 import logging
 
-# Load config
+# Load config and allow feature toggling from UI
 with open("config.yaml", "r") as f:
     config = yaml.safe_load(f)
+
+features = config.get("features", {})
+enabled = st.sidebar.multiselect(
+    "Enabled Features", list(features.keys()),
+    [k for k, v in features.items() if v]
+)
+for name in features:
+    features[name] = name in enabled
+config["features"] = features
 
 logger = logging.getLogger("RAEIO_UI")
 agent = RAEIOAgent(config, logger)

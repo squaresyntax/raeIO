@@ -10,10 +10,20 @@ def main():
     parser.add_argument('--url', type=str, help='URL for browser automation')
     parser.add_argument('--actions', type=str, help='Browser actions as JSON list')
     parser.add_argument('--plugin', type=str, help='Plugin name (optional)')
+    parser.add_argument('--enable-feature', action='append', default=[],
+                        help='Enable a feature (can be used multiple times)')
+    parser.add_argument('--disable-feature', action='append', default=[],
+                        help='Disable a feature (can be used multiple times)')
     args = parser.parse_args()
 
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
+
+    features = config.setdefault("features", {})
+    for name in args.enable_feature:
+        features[name] = True
+    for name in args.disable_feature:
+        features[name] = False
     logger = logging.getLogger("RAEIO_CLI")
     agent = RAEIOAgent(config, logger)
 
