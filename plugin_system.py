@@ -55,11 +55,15 @@ class PluginRegistry:
         return result
 
     def execute_plugin(self, plugin_name, **kwargs):
+        """Execute a plugin if permitted.
+
+        When fuckery mode is active, only plugins declaring
+        ``allow_fuckery=True`` in their metadata may run.
+        """
         meta = self.get_metadata(plugin_name)
         if self.fuckery_mode and not meta.get("allow_fuckery"):
             raise PermissionError(f"Plugin {plugin_name} is not allowed in fuckery mode")
         plugin = self.load_plugin(plugin_name)
         if hasattr(plugin, "run"):
             return plugin.run(**kwargs)
-        else:
-            raise AttributeError(f"Plugin {plugin_name} has no run()")
+        raise AttributeError(f"Plugin {plugin_name} has no run()")

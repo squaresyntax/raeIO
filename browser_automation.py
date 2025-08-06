@@ -44,7 +44,8 @@ class BrowserAutomation:
         return content
 
     def stealth_mode(self):
-        # Set headless, random user agent, and proxy for stealth
+        """Configure stealth settings used during fuckery mode."""
+        # Set headless and an innocuous user agent for reduced detectability
         self.headless = True
         self.user_agent = STEALTH_UA
         # Add further stealth tweaks as needed
