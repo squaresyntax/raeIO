@@ -22,6 +22,16 @@
 4. [Optional] Use PyInstaller or Briefcase for desktop app.
 5. For mobile, open the app in your browser and "Add to Homescreen".
 
+## Browser automation scripting
+
+`BrowserAutomation.run_script` exposes a small action-based DSL for driving the
+browser.  Scripts can navigate across multiple pages, fill and submit forms,
+follow links based on runtime conditions, and extract data using helpers like
+`query_selector_all`.
+
+See [`examples/multi_page_workflow.py`](examples/multi_page_workflow.py) for a
+complete example.
+
 ## UX Best Practices Used
 
 - **Onboarding**: Immediate welcome, quickstart, in-app docs.
