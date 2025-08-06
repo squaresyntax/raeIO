@@ -67,7 +67,9 @@ class RAEIOAgent:
                 self.stealth_mode = True
                 self.fuckery_key = Fernet.generate_key()
             self.prioritized_store = self._focus_to_store(feature_focus)
-            # self.active_plugins = self.plugin_registry.get_plugins_for(self.prioritized_store)
+            self.active_plugins = [
+                p["name"] for p in self.plugin_registry.list_plugins()
+            ]
         elif mode == "Training":
             self.training_mode = True
             self.fuckery_mode = False
@@ -83,7 +85,9 @@ class RAEIOAgent:
             self.fuckery_key = None
             self.fuckery_encrypted_blobs = []
             self.prioritized_store = self._mode_to_store(mode)
-            # self.active_plugins = self.plugin_registry.get_plugins_for(self.prioritized_store)
+            self.active_plugins = [
+                p["name"] for p in self.plugin_registry.list_plugins()
+            ]
 
     def _focus_to_store(self, focus):
         return {
