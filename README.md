@@ -22,6 +22,29 @@
 4. [Optional] Use PyInstaller or Briefcase for desktop app.
 5. For mobile, open the app in your browser and "Add to Homescreen".
 
+### Browser automation example
+
+The ``BrowserAutomation`` helper can execute simple multi‑page workflows using
+Playwright.  A script consists of a list of action dictionaries:
+
+```python
+from browser_automation import BrowserAutomation
+
+actions = [
+    {"type": "query", "selector": "a.login", "store": "links"},
+    {"type": "navigate", "from": "links", "index": 0},
+    {"type": "type", "selector": "#username", "value": "alice"},
+    {"type": "click", "selector": "#submit"},
+    {"type": "extract", "selector": "h1", "store": "headers"},
+]
+
+result = BrowserAutomation().run_script("https://example.com", actions)
+print(result["data"]["headers"])  # extracted text
+```
+
+Tests in ``tests/test_browser_automation.py`` show how to automate form
+autofill and conditional multi‑page navigation.
+
 ## UX Best Practices Used
 
 - **Onboarding**: Immediate welcome, quickstart, in-app docs.
