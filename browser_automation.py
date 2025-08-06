@@ -206,7 +206,10 @@ class BrowserAutomation:
                         elems = page.query_selector_all(act["selector"])
                     else:
                         elems = results.get(act.get("from"), [])
-                    texts = [e.inner_text() for e in elems]
+                    texts = [
+                        e.inner_text() if isinstance(e, Node) else str(e)
+                        for e in elems
+                    ]
                     results[act.get("store", "text")] = texts
                 elif a_type == "navigate":
                     if "url" in act:
