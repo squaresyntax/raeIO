@@ -10,3 +10,13 @@ tts_cache_dir: "tts_cache"
 browser_user_agent: null
 browser_proxy: null
 browser_headless: true
+models:
+  image:
+    name: stable_diffusion
+    enabled: true
+  video:
+    name: stable_video_diffusion
+    enabled: true
+  audio:
+    name: bark
+    enabled: true

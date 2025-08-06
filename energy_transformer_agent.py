@@ -8,6 +8,8 @@ import os
 import traceback
 import queue
 
+from model_registry import ModelRegistry
+
 try:
     import psutil
 except ImportError:
@@ -142,11 +144,12 @@ class GenerationTimeout(Exception):
     pass
 
 class GenerativeMediaManager:
-    def __init__(self, output_dir="outputs", logger=None, timeout=30):
+    def __init__(self, output_dir="outputs", logger=None, timeout=30, config=None):
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
         self.logger = logger or logging.getLogger("GenerativeMediaManager")
         self.timeout = timeout
+        self.models_config = config.get("models", {}) if config else {}
 
     def _run_with_timeout(self, func, *args, **kwargs):
         result_queue = queue.Queue()
@@ -167,6 +170,15 @@ class GenerativeMediaManager:
             raise res
         return res
 
+    def _get_model(self, modality: str):
+        cfg = self.models_config.get(modality, {})
+        if not cfg.get("enabled", True):
+            raise RuntimeError(f"{modality.capitalize()} generation disabled")
+        name = cfg.get("name")
+        if not name:
+            raise RuntimeError(f"No model configured for {modality}")
+        return ModelRegistry.get_model(name)
+
     def generate_image(self, prompt: str) -> str:
         return self._run_with_timeout(self._safe_generate_image, prompt)
 
@@ -175,11 +187,8 @@ class GenerativeMediaManager:
         self.logger.info(f"Generating image for prompt: {prompt}")
         if moderate_content(prompt) or is_pii(prompt):
             raise ValueError("Unsafe prompt blocked.")
-        image_path = os.path.join(self.output_dir, "image_result.png")
-        # Replace with actual model inference code
-        with open(image_path, "wb") as f:
-            f.write(b'')
-        return image_path
+        model = self._get_model("image")
+        return model.generate(prompt, self.output_dir)
 
     def generate_video(self, prompt: str, duration=5) -> str:
         return self._run_with_timeout(self._safe_generate_video, prompt, duration)
@@ -188,10 +197,8 @@ class GenerativeMediaManager:
         self.logger.info(f"Generating video for prompt: {prompt}, duration: {duration}s")
         if moderate_content(prompt) or is_pii(prompt):
             raise ValueError("Unsafe prompt blocked.")
-        video_path = os.path.join(self.output_dir, "video_result.mp4")
-        with open(video_path, "wb") as f:
-            f.write(b'')
-        return video_path
+        model = self._get_model("video")
+        return model.generate(prompt, self.output_dir, duration=duration)
 
     def generate_audio(self, prompt: str, duration=5) -> str:
         return self._run_with_timeout(self._safe_generate_audio, prompt, duration)
@@ -200,10 +207,8 @@ class GenerativeMediaManager:
         self.logger.info(f"Generating audio for prompt: {prompt}, duration: {duration}s")
         if moderate_content(prompt) or is_pii(prompt):
             raise ValueError("Unsafe prompt blocked.")
-        audio_path = os.path.join(self.output_dir, "audio_result.wav")
-        with open(audio_path, "wb") as f:
-            f.write(b'')
-        return audio_path
+        model = self._get_model("audio")
+        return model.generate(prompt, self.output_dir, duration=duration)
 
     # Placeholder for cross-modal consistency (stub)
     def check_modal_consistency(self, *modalities):
@@ -217,7 +222,9 @@ class EnergyTransformerAgent:
         self.policy = PolicyManager(config_path)
         self.policy.register_signal_handlers()
         self.policy.enforce_anonymity()
-        self.media_manager = GenerativeMediaManager(logger=self.policy.logger)
+        self.media_manager = GenerativeMediaManager(
+            logger=self.policy.logger, config=self.policy.config
+        )
         self.last_state = self.policy.recover_state()
         self.run_count = self.last_state.get("run_count", 0)
         self.error_count = self.last_state.get("error_count", 0)
