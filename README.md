@@ -22,6 +22,16 @@
 4. [Optional] Use PyInstaller or Briefcase for desktop app.
 5. For mobile, open the app in your browser and "Add to Homescreen".
 
+## CLI Usage
+
+```bash
+# Run with an explicit mode
+python raeio_cli_Version2.py --mode Art --prompt "Draw a cat"
+
+# Rely on the interactive prompt / default Text mode
+python raeio_cli_Version2.py --prompt "Analyze this text"
+```
+
 ## UX Best Practices Used
 
 - **Onboarding**: Immediate welcome, quickstart, in-app docs.

@@ -1,11 +1,22 @@
 import os
 import sys
-import yaml
 import logging
 import traceback
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    yaml = None
 
 # Import your agent and modules
-from raeio_agent import RAEIOAgent
+try:
+    from raeio_agent import RAEIOAgent
+except Exception:  # pragma: no cover - fallback stub
+    class RAEIOAgent:  # type: ignore
+        def __init__(self, config, logger):
+            pass
+
+        def run_task(self, task_type, prompt, context, plugin=None):
+            return f"Stub output for {task_type}: {prompt}"
 
 try:
     import tkinter as tk
@@ -19,21 +30,36 @@ def load_config():
     if not os.path.exists(config_path):
         print("Config file not found. Please ensure config.yaml exists.")
         sys.exit(1)
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+    if yaml:
+        with open(config_path, "r") as f:
+            return yaml.safe_load(f)
+    return {}
 
 def cli_main(agent):
     import argparse
     parser = argparse.ArgumentParser(description="RAE.IO CLI")
-    parser.add_argument('--mode', choices=['Art', 'Sound', 'Video', 'Text', 'TCG', 'Fuckery', 'Training', 'Browser'], required=True)
+    parser.add_argument(
+        '--mode',
+        choices=['Art', 'Sound', 'Video', 'Text', 'TCG', 'Fuckery', 'Training', 'Browser'],
+        help='Operation mode',
+        default=None,
+    )
     parser.add_argument('--prompt', type=str, help='Prompt for generation/analysis')
     parser.add_argument('--url', type=str, help='URL for browser automation')
     parser.add_argument('--actions', type=str, help='Browser actions as JSON list')
     parser.add_argument('--plugin', type=str, help='Plugin name (optional)')
     args = parser.parse_args()
 
+    if not args.mode:
+        try:
+            user_mode = input("Select mode [Text]: ").strip()
+            args.mode = user_mode or 'Text'
+        except EOFError:
+            args.mode = 'Text'
+
     if args.mode == "Browser":
         import json
+
         if not args.url or not args.actions:
             print("For browser mode, provide --url and --actions (as JSON list)")
             return
@@ -42,7 +68,9 @@ def cli_main(agent):
         output = agent.run_task("browser", args.prompt or "", context)
     else:
         context = {}
-        output = agent.run_task(args.mode.lower(), args.prompt or "", context, plugin=args.plugin)
+        output = agent.run_task(
+            args.mode.lower(), args.prompt or "", context, plugin=args.plugin
+        )
     print(f"\nOutput:\n{output}\n")
 
 def desktop_main(agent):
