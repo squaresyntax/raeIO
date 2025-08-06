@@ -5,8 +5,12 @@ import logging
 from raeio_agent import RAEIOAgent
 
 if "agent" not in st.session_state:
-    with open("config.yaml", "r") as f:
-        config = yaml.safe_load(f)
+    logging.basicConfig(level=logging.INFO)
+    try:
+        with open("config.yaml", "r") as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        config = {}
     logger = logging.getLogger("RAEIO_UI")
     st.session_state["agent"] = RAEIOAgent(config, logger)
 agent = st.session_state["agent"]
@@ -67,7 +71,8 @@ descriptions = {
     "Training": "Focuses on data ingestion, analysis, and embedding; disables output generation."
 }
 st.sidebar.info(descriptions[cat])
-st.markdown(fuckery_key_message)
+if fuckery_key_message:
+    st.markdown(fuckery_key_message)
 
 st.header("RAE.IO Agent")
 prompt = st.text_area("Enter your prompt here:")

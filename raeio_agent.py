@@ -1,4 +1,3 @@
-import os
 import time
 from cryptography.fernet import Fernet
 
@@ -64,12 +63,16 @@ class RAEIOAgent:
             self.training_mode = True
             self.fuckery_mode = False
             self.stealth_mode = False
+            self.fuckery_key = None
+            self.fuckery_encrypted_blobs = []
             self.prioritized_store = "general"
             self.active_plugins = []
         else:
             self.fuckery_mode = False
             self.stealth_mode = False
             self.training_mode = False
+            self.fuckery_key = None
+            self.fuckery_encrypted_blobs = []
             self.prioritized_store = self._mode_to_store(mode)
             # self.active_plugins = self.plugin_registry.get_plugins_for(self.prioritized_store)
 
