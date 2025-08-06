@@ -16,11 +16,22 @@
 
 ## Quickstart
 
-1. `pip install streamlit TTS playwright pyyaml`
-2. `playwright install`
+### Linux
+1. `chmod +x install.sh`
+2. `./install.sh`
 3. `streamlit run ui.py`
-4. [Optional] Use PyInstaller or Briefcase for desktop app.
-5. For mobile, open the app in your browser and "Add to Homescreen".
+
+### macOS
+1. `chmod +x install.command`
+2. `./install.command`
+3. `streamlit run ui.py`
+
+### Windows
+1. Run `install.bat`
+2. `streamlit run ui.py`
+
+The install scripts detect your operating system, install required system
+packages, Python dependencies, fonts, and run `playwright install` for you.
 
 ## UX Best Practices Used
 
@@ -42,3 +53,4 @@
 - **All code has been bug-checked and tested for modularity and reliability**.
 
 ---
+
