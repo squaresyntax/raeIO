@@ -1,59 +1,78 @@
 import threading
 import signal
 import logging
-import yaml
+import json
 
-class EmergencyStop(Exception):
-    pass
+from safety_enforcement import SafetyManager, EmergencyStop
+
 
 class PolicyManager:
-    def __init__(self, config_path='config.yaml'):
+    """High-level wrapper around :class:`SafetyManager`.
+
+    The policy manager loads configuration, delegates checks to the safety
+    manager and exposes a small helper API for validating and executing
+    actions.  It also handles signal-based emergency stops via an internal
+    ``threading.Event``.
+    """
+
+    def __init__(self, config_path: str = 'config.yaml'):
         self.load_config(config_path)
         self.stopped = threading.Event()
         self.logger = logging.getLogger("PolicyManager")
         self.logger.setLevel(logging.INFO)
+        self.safety = SafetyManager(
+            resource_limits=self.config.get('resource_limits', {}),
+            privacy_settings=self.config.get('privacy_settings', {}),
+            action_whitelist=self.config.get('security', {}).get('action_whitelist', []),
+        )
 
-    def load_config(self, path):
+    # ------------------------------------------------------------------
+    # Configuration
+    # ------------------------------------------------------------------
+    def load_config(self, path: str) -> None:
         with open(path, 'r') as f:
-            self.config = yaml.safe_load(f)
+            self.config = json.load(f)
 
-    def check_action(self, action: str):
-        allowed = self.config.get('security', {}).get('action_whitelist', [])
-        if action not in allowed:
-            self.logger.warning(f"Action '{action}' not permitted.")
-            raise PermissionError(f"Action '{action}' is not allowed by policy.")
+    # ------------------------------------------------------------------
+    # Delegated Safety Methods
+    # ------------------------------------------------------------------
+    def check_action(self, action: str) -> None:
+        self.safety.check_action(action)
 
-    def enforce_resource_limits(self):
-        # Example: pseudo-code, real implementation platform-dependent
-        # Use cgroups, resource module, or container limits in production
-        limits = self.config.get('resource_limits', {})
-        # Example: Check memory, CPU, network, etc.
-        # Raise exception or throttle if over limit
-        pass
+    def enforce_resource_limits(self) -> None:
+        self.safety.enforce_resource_limits()
 
     def apply_privacy(self, data):
-        if self.config['privacy_settings'].get('redact_pii', False):
-            return self.redact_pii(data)
-        return data
+        return self.safety.scrub_data(data)
 
-    def redact_pii(self, data):
-        # Placeholder: Use a PII detection library or regexes
-        return data
+    def audit_log(self, event: str) -> None:
+        self.safety.audit_log(event)
 
-    def enforce_anonymity(self):
-        if self.config['privacy_settings'].get('use_proxy', False):
-            # Route traffic via proxy (see networking code)
-            pass
-
-    def audit_log(self, event):
-        # Log all sensitive events for review
-        self.logger.info(f"Audit: {event}")
-
-    def emergency_stop(self, signum=None, frame=None):
-        self.logger.critical("Emergency stop triggered! Halting all processes.")
+    # ------------------------------------------------------------------
+    # Emergency Stop & Signal Handling
+    # ------------------------------------------------------------------
+    def emergency_stop(self, signum=None, frame=None) -> None:
         self.stopped.set()
-        raise EmergencyStop("Emergency stop activated.")
+        self.safety.emergency_stop()
 
-    def register_signal_handlers(self):
+    def register_signal_handlers(self) -> None:
         signal.signal(signal.SIGINT, self.emergency_stop)
         signal.signal(signal.SIGTERM, self.emergency_stop)
+
+    # ------------------------------------------------------------------
+    # Action Execution
+    # ------------------------------------------------------------------
+    def execute(self, action: str, func, *args, **kwargs):
+        """Validate and execute ``func`` labelled by ``action``.
+
+        The action is checked against the whitelist and resource limits before
+        ``func`` is invoked.  If the function returns a string, it is passed
+        through the privacy scrubber before being returned.
+        """
+        self.check_action(action)
+        self.enforce_resource_limits()
+        result = func(*args, **kwargs)
+        if isinstance(result, str):
+            result = self.apply_privacy(result)
+        return result
+
