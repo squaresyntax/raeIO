@@ -2,7 +2,7 @@ import os
 import time
 from task_memory import TaskMemory
 from cache_manager import CacheManager
-from plugin_system import PluginRegistry
+from plugin_registry import PluginRegistry
 from tts_manager import TTSManager
 
 try:
