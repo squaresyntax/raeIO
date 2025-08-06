@@ -46,6 +46,18 @@ Run the CLI with a prompt. By default it operates in **Text** mode when no `--mo
 python raeio_cli_Version2.py --prompt "Write a short poem about the sky"
 ```
 
+## Running Tests
+
+1. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   pip install pytest
+   ```
+2. Run the test suite:
+   ```
+   pytest
+   ```
+
 ## UX Best Practices Used
 
 - **Onboarding**: Immediate welcome, quickstart, in-app docs.
