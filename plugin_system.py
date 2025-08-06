@@ -11,6 +11,10 @@ class PluginRegistry:
         os.makedirs(plugin_dir, exist_ok=True)
         self.scan_plugins()
 
+    def set_fuckery_mode(self, enabled: bool):
+        """Toggle fuckery mode at runtime."""
+        self.fuckery_mode = bool(enabled)
+
     def scan_plugins(self):
         self.plugins = {}
         for fname in os.listdir(self.plugin_dir):

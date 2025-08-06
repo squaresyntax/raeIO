@@ -11,6 +11,10 @@ class TaskMemory:
         self.fuckery_mode = fuckery_mode
         self._create_file()
 
+    def set_fuckery_mode(self, enabled: bool):
+        """Toggle fuckery mode at runtime."""
+        self.fuckery_mode = bool(enabled)
+
     def _create_file(self):
         if not os.path.exists(self.path):
             with open(self.path, "w") as f:

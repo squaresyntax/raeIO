@@ -50,6 +50,15 @@ class RAEIOAgent:
             fuckery_mode=self.fuckery_mode,
         )
 
+    def set_fuckery_mode(self, enabled: bool):
+        """Update fuckery mode and propagate to subsystems."""
+        self.fuckery_mode = bool(enabled)
+        self.memory.set_fuckery_mode(self.fuckery_mode)
+        self.plugin_registry.set_fuckery_mode(self.fuckery_mode)
+        self.tts_manager.set_fuckery_mode(self.fuckery_mode)
+        self.browser_automation.set_fuckery_mode(self.fuckery_mode)
+        self.media_manager.set_fuckery_mode(self.fuckery_mode)
+
     def run_task(self, task_type, prompt, context, plugin=None):
         t0 = time.time()
         try:

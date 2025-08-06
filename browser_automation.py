@@ -10,6 +10,8 @@ class BrowserAutomation:
         self.proxy = proxy
         self.headless = headless
         self.logger = logger
+        self._orig_user_agent = user_agent
+        self._orig_headless = headless
         self.fuckery_mode = fuckery_mode
         if self.fuckery_mode:
             self.stealth_mode()
@@ -45,4 +47,13 @@ class BrowserAutomation:
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/114.0.0.0 Safari/537.36"
         )
+
+    def set_fuckery_mode(self, enabled: bool):
+        """Toggle fuckery mode at runtime."""
+        self.fuckery_mode = bool(enabled)
+        if self.fuckery_mode:
+            self.stealth_mode()
+        else:
+            self.headless = self._orig_headless
+            self.user_agent = self._orig_user_agent
 

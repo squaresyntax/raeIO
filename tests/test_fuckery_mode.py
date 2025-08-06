@@ -89,3 +89,28 @@ def test_agent_propagates_flag(tmp_path):
     assert agent.browser_automation.fuckery_mode is True
     assert agent.media_manager.fuckery_mode is True
 
+
+def test_agent_toggle_fuckery_mode(tmp_path):
+    plugin_dir = tmp_path / "plugins"
+    plugin_dir.mkdir()
+    config = {
+        "fuckery_mode": False,
+        "memory_path": str(tmp_path / "mem.jsonl"),
+        "plugin_dir": str(plugin_dir),
+        "tts_cache_dir": str(tmp_path / "tts"),
+        "media_output_dir": str(tmp_path / "media"),
+        "browser_headless": False,
+    }
+    agent = RAEIOAgent(config, logger=None)
+    assert agent.fuckery_mode is False
+    img = agent.media_manager.generate_image("ok")
+    assert not img.endswith(".enc")
+    agent.set_fuckery_mode(True)
+    assert agent.fuckery_mode is True
+    assert agent.memory.fuckery_mode is True
+    enc_img = agent.media_manager.generate_image("secret")
+    assert enc_img.endswith(".enc")
+    agent.set_fuckery_mode(False)
+    assert agent.fuckery_mode is False
+    assert agent.memory.fuckery_mode is False
+

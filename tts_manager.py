@@ -18,6 +18,10 @@ class TTSManager:
         else:
             self.tts = None
 
+    def set_fuckery_mode(self, enabled: bool):
+        """Toggle fuckery mode at runtime."""
+        self.fuckery_mode = bool(enabled)
+
     def synthesize(self, text, voice=None, speaker_wav=None, emotion=None):
         voice = voice or self.voice
         fname = f"{hash((text, voice, emotion, speaker_wav))}.wav"

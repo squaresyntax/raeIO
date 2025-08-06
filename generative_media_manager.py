@@ -9,6 +9,10 @@ class GenerativeMediaManager:
         self.logger = logger or logging.getLogger("GenerativeMediaManager")
         self.fuckery_mode = fuckery_mode
 
+    def set_fuckery_mode(self, enabled: bool):
+        """Toggle fuckery mode at runtime."""
+        self.fuckery_mode = bool(enabled)
+
     def _save(self, path):
         if self.fuckery_mode:
             path = f"{path}.enc"
